@@ -1,4 +1,4 @@
-// --- File: server.js (Phiên bản tinh gọn, chỉ còn Trợ lý AI) ---
+// --- File: server.js (Nâng cấp: AI có thể đề xuất tạo và cập nhật) ---
 
 // --- Giai đoạn 1: Nạp các "phụ tùng" ---
 console.log("Bắt đầu khởi tạo server...");
@@ -32,8 +32,6 @@ try {
 
     // --- Giai đoạn 4: Tạo các "cánh cửa" API ---
 
-    // ĐÃ XÓA: Cánh cửa /api/import-patients
-
     // CÁNH CỬA: Dành cho Trợ lý AI
     app.post('/api/assistant', async (req, res) => {
         console.log("Đã nhận được yêu cầu tại /api/assistant...");
@@ -43,24 +41,65 @@ try {
                 return res.status(400).json({ message: "Câu hỏi không được để trống." });
             }
 
-            const today = new Date().toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+            const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD format
 
-            const prompt = `Bạn là một trợ lý phân tích dữ liệu phòng khám thông minh và súc tích. Bạn sẽ nhận được một câu hỏi từ người dùng và một bộ dữ liệu bệnh nhân dưới dạng JSON. Nhiệm vụ của bạn là trả lời câu hỏi đó CHỈ DỰA TRÊN dữ liệu được cung cấp.
+            const prompt = `Bạn là một trợ lý AI cho ứng dụng quản lý phòng khám. Nhiệm vụ của bạn là phân tích yêu cầu của người dùng và dữ liệu bệnh nhân (context) được cung cấp, sau đó trả về một đối tượng JSON DUY NHẤT để ứng dụng có thể thực hiện hành động.
 
-            QUY TẮC:
-            - Trả lời ngắn gọn, đi thẳng vào vấn đề.
-            - Nếu câu hỏi yêu cầu liệt kê, hãy dùng gạch đầu dòng (-).
-            - Nếu dữ liệu không đủ để trả lời, hãy nói rằng "Dữ liệu hiện tại không đủ để trả lời câu hỏi này."
-            - Luôn trả lời bằng tiếng Việt.
-            - Hôm nay là ngày ${today}.
+            Hôm nay là ngày ${today}.
 
-            Dữ liệu bệnh nhân hiện tại:
+            **ĐỊNH DẠNG ĐẦU RA (OUTPUT FORMAT):**
+            Bạn PHẢI trả lời bằng một trong ba định dạng JSON sau, tuân thủ \`responseSchema\`.
+
+            1.  **Khi người dùng chỉ hỏi thông tin (ví dụ: "có bao nhiêu bệnh nhân?"):**
+                Action là "query", response là câu trả lời dạng văn bản.
+                
+            2.  **Khi người dùng yêu cầu CẬP NHẬT thông tin (ví dụ: "cập nhật sdt cho A thành X"):**
+                Action là "update", bạn phải xác định chính xác 'patientId', các trường cần cập nhật trong 'updates', và một câu 'response' tóm tắt hành động.
+
+            3.  **Khi người dùng yêu cầu TẠO MỚI bệnh nhân (ví dụ: "thêm bệnh nhân B, sdt Y, năm sinh Z"):**
+                Action là "create", bạn phải điền các thông tin được cung cấp vào 'updates' và một câu 'response' tóm tắt hành động. 'patientId' sẽ là null.
+
+            **QUY TẮC QUAN TRỌNG:**
+            -   **Tìm \`patientId\` (cho action 'update'):** Dựa vào tên hoặc thông tin trong câu hỏi, bạn PHẢI tìm chính xác \`id\` của bệnh nhân đó từ dữ liệu \`context\` và điền vào trường \`patientId\`. Nếu không tìm thấy hoặc không chắc chắn, hãy trả về \`action: "query"\` với câu trả lời giải thích.
+            -   **Xác định \`updates\`:**
+                -   Các trường có thể xử lý là: \`subject\`, \`name\`, \`yearOfBirth\`, \`phone\`, \`lastExamDate\` (định dạng YYYY-MM-DD), \`nextExamDate\` (định dạng YYYY-MM-DD), \`revisitDays\` (số), \`notes\`.
+                -   Nếu người dùng nói "đánh dấu đã khám", hãy đặt \`lastExamDate\` thành ngày hôm nay. Nếu bệnh nhân có \`revisitDays\`, hãy tính toán và cập nhật \`nextExamDate\`.
+                -   Với action 'create', nếu ngày khám không được chỉ định, hãy mặc định \`lastExamDate\` là hôm nay.
+            -   **Luôn trả lời bằng JSON:** Không được thêm bất kỳ văn bản nào ngoài đối tượng JSON.
+
+            **Dữ liệu bệnh nhân hiện tại (context):**
             ${JSON.stringify(context, null, 2)}
 
-            Câu hỏi của người dùng: "${query}"`;
+            **Yêu cầu của người dùng:** "${query}"`;
             
             const payload = {
-                contents: [{ parts: [{ text: prompt }] }]
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "action": { "type": "STRING", "enum": ["query", "update", "create"] },
+                            "response": { "type": "STRING" },
+                            "patientId": { "type": "STRING" },
+                            "updates": { 
+                                "type": "OBJECT",
+                                "properties": {
+                                    "subject": { "type": "STRING" },
+                                    "name": { "type": "STRING" },
+                                    "yearOfBirth": { "type": "NUMBER" },
+                                    "phone": { "type": "STRING" },
+                                    "lastExamDate": { "type": "STRING" },
+                                    "nextExamDate": { "type": "STRING" },
+                                    "revisitDays": { "type": "NUMBER" },
+                                    "notes": { "type": "STRING" }
+                                },
+                                "nullable": true
+                            }
+                        },
+                        "required": ["action", "response"]
+                    }
+                }
             };
 
             const geminiResponse = await fetch(geminiApiUrl, {
@@ -69,21 +108,34 @@ try {
                 body: JSON.stringify(payload)
             });
 
+            const responseTextRaw = await geminiResponse.text();
             if (!geminiResponse.ok) {
-                const errorText = await geminiResponse.text();
-                console.error("Lỗi từ Gemini API:", errorText);
+                console.error(`Lỗi từ Gemini API (status ${geminiResponse.status}):`, responseTextRaw);
                 throw new Error(`Lỗi từ Gemini API: ${geminiResponse.statusText}`);
             }
+            if (!responseTextRaw) {
+                console.warn("Gemini API trả về một phản hồi trống, có thể do bộ lọc an toàn.");
+                return res.status(200).json({ action: "query", response: "Tôi không thể xử lý yêu cầu này do có thể vi phạm chính sách nội dung." });
+            }
 
-            const result = await geminiResponse.json();
-            const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            let result;
+            try {
+                result = JSON.parse(responseTextRaw);
+                const potentialResult = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if(potentialResult) {
+                    result = JSON.parse(potentialResult);
+                }
+            } catch (e) {
+                console.error("Không thể phân tích JSON từ phản hồi của Gemini:", responseTextRaw);
+                throw new Error("Phản hồi của AI có định dạng không hợp lệ.");
+            }
             
-            console.log("Trợ lý AI đã xử lý xong.");
-            res.status(200).json({ response: responseText || "Tôi không thể xử lý yêu cầu này." });
+            console.log("Trợ lý AI đã xử lý xong, đề xuất hành động:", result.action);
+            res.status(200).json(result);
 
         } catch (error) {
             console.error('Lỗi trong quá trình xử lý của trợ lý AI:', error);
-            res.status(500).json({ message: 'Đã có lỗi xảy ra phía máy chủ' });
+            res.status(500).json({ message: error.message || 'Đã có lỗi xảy ra phía máy chủ' });
         }
     });
 
