@@ -1,151 +1,125 @@
-// --- File: server.js (Nâng cấp: AI có thể đề xuất tạo và cập nhật) ---
+// --- File: server.js ---
 
-// --- Giai đoạn 1: Nạp các "phụ tùng" ---
+const express = require('express');
+const fetch = require('node-fetch');
+const cors = require('cors');
+const path = require('path');
+require('dotenv').config();
+
 console.log("Bắt đầu khởi tạo server...");
 
-try {
-    const express = require('express');
-    const path = require('path');
-    const fetch = require('node-fetch');
-    const cors = require('cors'); 
-    require('dotenv').config(); 
+const app = express();
+app.use(cors());
 
-    console.log("Tất cả thư viện đã được nạp thành công.");
+// --- SỬA LỖI: Tăng giới hạn payload lên 50MB ---
+// Lỗi "Request Entity Too Large" xảy ra khi bạn gửi quá nhiều dữ liệu bệnh nhân
+// cho AI cùng lúc (ví dụ: khi ở màn hình chọn phòng khám).
+// Chúng ta tăng giới hạn này lên để xử lý được lượng dữ liệu lớn.
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-    // --- Giai đoạn 2: Tạo ra máy chủ ---
-    const app = express();
-    app.use(cors()); 
-    app.use(express.json({ limit: '5mb' }));
-    app.use(express.static(path.join(__dirname, 'public')));
+// Phục vụ các tệp tĩnh từ thư mục 'public'
+app.use(express.static(path.join(__dirname, 'public')));
 
 
-    // --- Giai đoạn 3: Lấy API Key ---
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+    console.error("!!! LỖI QUAN TRỌNG: Biến môi trường GEMINI_API_KEY chưa được thiết lập.");
+} else {
+    console.log("API Key đã được nạp thành công.");
+}
+
+const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+
+
+app.post('/api/assistant', async (req, res) => {
+    console.log("Đã nhận được yêu cầu tại /api/assistant...");
     if (!GEMINI_API_KEY) {
-        console.error("!!! LỖI: Biến môi trường GEMINI_API_KEY chưa được thiết lập.");
-        process.exit(1); 
-    } else {
-        console.log("API Key đã được nạp thành công.");
+        return res.status(500).json({ message: "Lỗi phía máy chủ: API Key chưa được cấu hình." });
     }
 
-    const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
-
-    // --- Giai đoạn 4: Tạo các "cánh cửa" API ---
-
-    // CÁNH CỬA: Dành cho Trợ lý AI
-    app.post('/api/assistant', async (req, res) => {
-        console.log("Đã nhận được yêu cầu tại /api/assistant...");
-        try {
-            const { query, context } = req.body;
-            if (!query) {
-                return res.status(400).json({ message: "Câu hỏi không được để trống." });
-            }
-
-            const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD format
-
-            const prompt = `Bạn là một trợ lý AI cho ứng dụng quản lý phòng khám. Nhiệm vụ của bạn là phân tích yêu cầu của người dùng và dữ liệu bệnh nhân (context) được cung cấp, sau đó trả về một đối tượng JSON DUY NHẤT để ứng dụng có thể thực hiện hành động.
-
-            Hôm nay là ngày ${today}.
-
-            **ĐỊNH DẠNG ĐẦU RA (OUTPUT FORMAT):**
-            Bạn PHẢI trả lời bằng một trong ba định dạng JSON sau, tuân thủ \`responseSchema\`.
-
-            1.  **Khi người dùng chỉ hỏi thông tin (ví dụ: "có bao nhiêu bệnh nhân?"):**
-                Action là "query", response là câu trả lời dạng văn bản.
-                
-            2.  **Khi người dùng yêu cầu CẬP NHẬT thông tin (ví dụ: "cập nhật sdt cho A thành X"):**
-                Action là "update", bạn phải xác định chính xác 'patientId', các trường cần cập nhật trong 'updates', và một câu 'response' tóm tắt hành động.
-
-            3.  **Khi người dùng yêu cầu TẠO MỚI bệnh nhân (ví dụ: "thêm bệnh nhân B, sdt Y, năm sinh Z"):**
-                Action là "create", bạn phải điền các thông tin được cung cấp vào 'updates' và một câu 'response' tóm tắt hành động. 'patientId' sẽ là null.
-
-            **QUY TẮC QUAN TRỌNG:**
-            -   **Tìm \`patientId\` (cho action 'update'):** Dựa vào tên hoặc thông tin trong câu hỏi, bạn PHẢI tìm chính xác \`id\` của bệnh nhân đó từ dữ liệu \`context\` và điền vào trường \`patientId\`. Nếu không tìm thấy hoặc không chắc chắn, hãy trả về \`action: "query"\` với câu trả lời giải thích.
-            -   **Xác định \`updates\`:**
-                -   Các trường có thể xử lý là: \`subject\`, \`name\`, \`yearOfBirth\`, \`phone\`, \`lastExamDate\` (định dạng YYYY-MM-DD), \`nextExamDate\` (định dạng YYYY-MM-DD), \`revisitDays\` (số), \`notes\`.
-                -   Nếu người dùng nói "đánh dấu đã khám", hãy đặt \`lastExamDate\` thành ngày hôm nay. Nếu bệnh nhân có \`revisitDays\`, hãy tính toán và cập nhật \`nextExamDate\`.
-                -   Với action 'create', nếu ngày khám không được chỉ định, hãy mặc định \`lastExamDate\` là hôm nay.
-            -   **Luôn trả lời bằng JSON:** Không được thêm bất kỳ văn bản nào ngoài đối tượng JSON.
-
-            **Dữ liệu bệnh nhân hiện tại (context):**
-            ${JSON.stringify(context, null, 2)}
-
-            **Yêu cầu của người dùng:** "${query}"`;
-            
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            "action": { "type": "STRING", "enum": ["query", "update", "create"] },
-                            "response": { "type": "STRING" },
-                            "patientId": { "type": "STRING" },
-                            "updates": { 
-                                "type": "OBJECT",
-                                "properties": {
-                                    "subject": { "type": "STRING" },
-                                    "name": { "type": "STRING" },
-                                    "yearOfBirth": { "type": "NUMBER" },
-                                    "phone": { "type": "STRING" },
-                                    "lastExamDate": { "type": "STRING" },
-                                    "nextExamDate": { "type": "STRING" },
-                                    "revisitDays": { "type": "NUMBER" },
-                                    "notes": { "type": "STRING" }
-                                },
-                                "nullable": true
-                            }
-                        },
-                        "required": ["action", "response"]
-                    }
-                }
-            };
-
-            const geminiResponse = await fetch(geminiApiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const responseTextRaw = await geminiResponse.text();
-            if (!geminiResponse.ok) {
-                console.error(`Lỗi từ Gemini API (status ${geminiResponse.status}):`, responseTextRaw);
-                throw new Error(`Lỗi từ Gemini API: ${geminiResponse.statusText}`);
-            }
-            if (!responseTextRaw) {
-                console.warn("Gemini API trả về một phản hồi trống, có thể do bộ lọc an toàn.");
-                return res.status(200).json({ action: "query", response: "Tôi không thể xử lý yêu cầu này do có thể vi phạm chính sách nội dung." });
-            }
-
-            let result;
-            try {
-                result = JSON.parse(responseTextRaw);
-                const potentialResult = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if(potentialResult) {
-                    result = JSON.parse(potentialResult);
-                }
-            } catch (e) {
-                console.error("Không thể phân tích JSON từ phản hồi của Gemini:", responseTextRaw);
-                throw new Error("Phản hồi của AI có định dạng không hợp lệ.");
-            }
-            
-            console.log("Trợ lý AI đã xử lý xong, đề xuất hành động:", result.action);
-            res.status(200).json(result);
-
-        } catch (error) {
-            console.error('Lỗi trong quá trình xử lý của trợ lý AI:', error);
-            res.status(500).json({ message: error.message || 'Đã có lỗi xảy ra phía máy chủ' });
+    try {
+        const { query, context } = req.body;
+        if (!query) {
+            return res.status(400).json({ message: "Câu hỏi không được để trống." });
         }
-    });
+        const today = new Date().toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+        const systemPrompt = `You are an intelligent and concise clinic data analysis assistant. Your name is Medly. You will receive a user's question and a JSON dataset of patients. Your task is to respond to the question BASED ONLY on the provided data. Today is ${today}.
 
-    // --- Giai đoạn 5: Khởi động máy chủ ---
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log(`>>> Máy chủ trung gian đang lắng nghe tại cổng ${PORT}`);
-    });
+        RULES:
+        1.  Analyze the user's intent: Is it a query ('query'), an update request ('update'), or a creation request ('create')?
+        2.  For a 'query', answer concisely. Use bullet points (-) for lists. If data is insufficient, state: "Dữ liệu hiện tại không đủ để trả lời câu hỏi này."
+        3.  For 'update' or 'create' requests, identify the necessary data from the user's query.
+        4.  You MUST respond in a specific JSON format. Do not add any text outside the JSON structure.
+        5.  Always respond in Vietnamese.
+        6.  For updates, you must find the correct patient 'id' from the context. If multiple patients match a name, ask for clarification. If no patient is found, state it in the 'response' field.
+        7.  When creating a patient, 'name' is mandatory. Other fields are optional.
+        
+        JSON Response Format:
+        {
+          "response": "Your natural language answer for 'query' actions, or a confirmation/error message for 'update'/'create'.",
+          "action": "query" | "update" | "create" | "clarify" | "error",
+          "patientId": "The ID of the patient to update (for 'update' action only).",
+          "updates": {
+            "fieldName1": "newValue1",
+            "fieldName2": "newValue2"
+          }
+        }
+        
+        Patient data fields: 'id', 'subject', 'name', 'yearOfBirth', 'phone', 'lastExamDate', 'nextExamDate', 'revisitDays', 'status', 'notes'.
+        The 'id' is a unique alphanumeric string. Do NOT invent an ID.
+        
+        Current Patient Data:
+        ${JSON.stringify(context, null, 2)}
+        
+        User's request: "${query}"`;
+        
+        const payload = {
+            contents: [{ parts: [{ text: systemPrompt }] }],
+            generationConfig: {
+                responseMimeType: "application/json",
+            }
+        };
 
-} catch (e) {
-    console.error("!!! Lỗi khởi tạo server:", e);
-}
+        const geminiResponse = await fetch(geminiApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!geminiResponse.ok) {
+            const errorText = await geminiResponse.text();
+            console.error("Lỗi từ Gemini API:", errorText);
+            throw new Error(`Lỗi từ Gemini API: ${geminiResponse.statusText}`);
+        }
+
+        const result = await geminiResponse.json();
+        const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        console.log("Trợ lý AI đã xử lý xong. Phản hồi:", responseText);
+        
+        res.setHeader('Content-Type', 'application/json');
+        res.status(200).send(responseText);
+
+    } catch (error) {
+        console.error('Lỗi trong quá trình xử lý của trợ lý AI:', error);
+        res.status(500).json({
+             "response": `Đã có lỗi xảy ra phía máy chủ khi xử lý yêu cầu của bạn. Chi tiết: ${error.message}`,
+             "action": "error",
+             "patientId": null,
+             "updates": {}
+        });
+    }
+});
+
+// Route mặc định để phục vụ index.html
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Khởi động máy chủ
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`>>> Máy chủ đang lắng nghe tại cổng ${PORT}`);
+});
 
