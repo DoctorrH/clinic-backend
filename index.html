@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý lịch hẹn phòng khám</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%234f46e5'><path stroke-linecap='round' stroke-linejoin='round' d='M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z' /></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+         body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            padding: 0;
+            margin: 0;
+            transition: background-image 0.5s ease-in-out;
+        }
+        .app-background {
+            background-image: url('https://images.unsplash.com/photo-1605901289699-507758asă21e6?q=80&w=1932&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 20px;
+            box-sizing: border-box; 
+        }
+        .header {
+            background: linear-gradient(to right, rgba(107, 70, 193, 0.9), rgba(76, 81, 191, 0.9));
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+        .header-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            gap: 16px;
+        }
+        .app-logo {
+            width: 48px;
+            height: 48px;
+        }
+        .login-logo {
+             width: 64px;
+             height: 64px;
+             margin-bottom: 1rem;
+        }
+        .logout-btn {
+            position: absolute;
+            top: 16px; 
+            right: 16px; 
+            padding: 8px 16px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        .card {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            backdrop-filter: blur(5px);
+        }
+        .input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            align-items: center;
+            flex-direction: column; 
+        }
+        @media (min-width: 640px) { 
+            .input-group {
+                flex-direction: row;
+            }
+        }
+        .input-group input, .input-group select {
+            border: 1px solid #d1d5db;
+            padding: 10px 14px;
+            border-radius: 8px;
+            width: 100%; 
+        }
+        @media (min-width: 640px) {
+            .input-group input, .input-group select {
+                width: auto; 
+                flex-grow: 1;
+            }
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: white;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+            width: 100%; 
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        @media (min-width: 640px) {
+            .btn {
+                width: auto; 
+            }
+        }
+        .btn-primary {
+            background-color: #4f46e5;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+        .btn-secondary {
+            background-color: #d1d5db;
+            color: #1f2937;
+        }
+        .btn-secondary:hover {
+            background-color: #9ca3af;
+        }
+        .btn-delete {
+            background-color: #ef4444;
+        }
+        .btn-delete:hover {
+            background-color: #dc2626;
+        }
+        .btn-success {
+            background-color: #10b981;
+        }
+        .btn-success:hover {
+            background-color: #059669;
+        }
+        .btn-undo {
+            background-color: #f59e0b;
+        }
+        .btn-undo:hover {
+            background-color: #d97706;
+        }
+        .table-container {
+            overflow-x: auto; 
+            overflow-y: auto;
+            max-height: calc(100vh - 250px);
+            position: relative;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px; 
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            cursor: pointer;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+        th.sortable:hover {
+            background-color: #f3f4f6;
+        }
+        .sort-indicator {
+            display: inline-block;
+            width: 1em;
+            text-align: center;
+        }
+        .th-revisit {
+            width: 120px; /* Fixed width */
+            white-space: normal; /* Allow wrapping */
+            text-align: center;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-missed {
+            background-color: #fca5a5;
+            color: #7f1d1d;
+        }
+        .badge-revisit {
+            background-color: #a7f3d0;
+            color: #065f46;
+        }
+        .badge-overdue {
+            background-color: #fca5a5;
+            color: #7f1d1d;
+        }
+        .badge-discontinued {
+            background-color: #ef4444;
+            color: #7f1d1d;
+        }
+        .badge-scheduled {
+            background-color: #f9d8a3;
+            color: #92400e;
+        }
+        .badge-examined {
+            background-color: #2dd4bf;
+            color: #115e59;
+        }
+        .badge-upcoming {
+            background-color: #fcd34d;
+            color: #92400e;
+        }
+        .notes-row {
+            display: none;
+        }
+        .notes-cell {
+            padding: 8px 16px;
+        }
+        .notes-input {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            resize: vertical;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.3s;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #4f46e5;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .fullscreen-center {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #e5e7eb;
+            width: 100%;
+            text-align: center;
+        }
+        #authScreen {
+            background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+        #clinicSelectionScreen {
+            background-image: url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+        .center-card {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 400px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            backdrop-filter: blur(5px);
+        }
+        #clinicSelectionScreen .center-card {
+            max-width: 800px; /* Wider for calendar */
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .clinic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 20px -5px rgba(0, 0, 0, 0.1), 0 6px 10px -3px rgba(0, 0, 0, 0.05);
+        }
+        .clinic-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+            width: 100%;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 20px; 
+            box-sizing: border-box; 
+        }
+        .modal-content {
+            background-color: white;
+            padding: 24px;
+            border-radius: 12px;
+            width: 100%; 
+            max-width: 500px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+            max-height: 80vh; 
+            overflow-y: auto; 
+        }
+        .modal-input-group {
+            margin-bottom: 16px;
+        }
+        .modal-input-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .modal-input-group input, .modal-input-group select, .modal-input-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+        }
+        .modal-message {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .fixed-scroll-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background-color: #f9fafb;
+            border-top: 1px solid #d1d5db;
+            box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.05);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            padding: 0 16px;
+        }
+        .fixed-scroll {
+            width: 100%;
+            height: 20px;
+            overflow-x: auto;
+        }
+        .fixed-scroll-inner {
+            width: var(--table-width, 100%);
+            height: 1px;
+        }
+        .notes-text-display {
+            padding: 8px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .editable-cell {
+            cursor: pointer;
+            position: relative;
+        }
+        .editable-cell input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px solid #4f46e5;
+            padding: 0 8px;
+            box-sizing: border-box;
+            background-color: #eef2ff;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        #calendarHeader button {
+            background-color: #e5e7eb;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-weight: bold;
+        }
+        #calendarGrid .day-cell {
+            min-height: 80px;
+            border: 1px solid #e5e7eb;
+            transition: background-color 0.2s;
+            padding-top: 24px;
+        }
+        #calendarGrid .day-cell:not(.empty-cell) {
+            cursor: pointer;
+        }
+        #calendarGrid .day-cell:not(.empty-cell):hover {
+            background-color: #f3f4f6;
+        }
+        #calendarGrid .day-number {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            font-size: 0.8rem;
+        }
+        #calendarGrid .today .day-number {
+            background-color: #4f46e5;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .patient-counts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            padding: 2px;
+        }
+        .patient-count-badge {
+            font-size: 0.7rem;
+            padding: 2px 5px;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+        }
+        .count-THAA { background-color: #ef4444; } /* red */
+        .count-THAB { background-color: #f97316; } /* orange */
+        .count-DTDA { background-color: #22c55e; } /* green */
+        .count-DTDB { background-color: #3b82f6; } /* blue */
+        #aiChatHistory .chat-bubble {
+            padding: 8px 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        #aiChatHistory .user-bubble {
+            background-color: #dbeafe; /* blue-100 */
+            color: #1e3a8a; /* blue-900 */
+            margin-left: auto;
+            border-bottom-right-radius: 2px;
+        }
+        #aiChatHistory .ai-bubble {
+            background-color: #f3f4f6; /* gray-100 */
+            color: #1f2937; /* gray-800 */
+            margin-right: auto;
+            border-bottom-left-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Màn hình đăng nhập -->
+    <div class="fullscreen-center" id="authScreen">
+        <div class="center-card">
+            <svg class="login-logo text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+            </svg>
+            <h2 class="text-2xl font-bold mb-4">Đăng nhập Hệ thống</h2>
+            <div class="modal-input-group">
+                <input type="email" id="emailInput" class="w-full border border-gray-300 p-2 rounded" placeholder="Tên tài khoản (email)" value="">
+            </div>
+            <div class="modal-input-group">
+                <input type="password" id="passwordInput" class="w-full border border-gray-300 p-2 rounded" placeholder="Mật khẩu...">
+            </div>
+            <button id="authButton" class="btn btn-primary w-full mt-2">Đăng nhập</button>
+            <p id="authErrorMessage" class="text-red-500 mt-2 h-4"></p>
+        </div>
+    </div>
+
+    <!-- Màn hình chọn phòng khám -->
+    <div class="fullscreen-center" id="clinicSelectionScreen" style="display: none;">
+        <div class="center-card">
+            <div class="flex justify-between items-center">
+                 <h2 class="text-2xl font-bold">Chọn Phòng Khám</h2>
+            </div>
+            <p class="text-sm text-gray-600 my-4">Xin chào <span id="userEmail" class="font-semibold"></span>! Vui lòng chọn một phòng khám.</p>
+            <div id="clinicList" class="clinic-list"></div>
+            <div id="calendarContainer" class="mt-8">
+                <div id="calendarHeader" class="flex justify-between items-center mb-4">
+                    <button id="prevMonthBtn" class="px-2 py-1 rounded">&lt;</button>
+                    <h3 id="monthAndYear" class="text-xl font-semibold"></h3>
+                    <button id="nextMonthBtn" class="px-2 py-1 rounded">&gt;</button>
+                </div>
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center text-sm"></div>
+                <div id="calendarLegend" class="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
+                    <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full count-THAA"></span><span>THAA</span></div>
+                    <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full count-THAB"></span><span>THAB</span></div>
+                    <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full count-DTDA"></span><span>DTDA</span></div>
+                    <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full count-DTDB"></span><span>DTDB</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Màn hình ứng dụng chính -->
+    <div id="mainApp" style="display: none;">
+         <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+        </div>
+        <div class="container">
+            <header class="header">
+                <div class="header-content">
+                    <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                    </svg>
+                    <div>
+                        <h1 class="text-3xl font-bold">Ứng Dụng Quản Lý Phòng Khám</h1>
+                        <p class="text-xs mt-2 opacity-75">by Ngo Trung Hieu</p>
+                    </div>
+                </div>
+                <p class="text-lg mt-2 opacity-80 text-center" id="clinicName">Phòng khám</p>
+                <button onclick="goBackToClinicSelection()" class="logout-btn">Quay lại</button>
+            </header>
+            
+            <main>
+                <div class="card">
+                    <h2 class="text-xl font-bold mb-4">Danh sách Bệnh nhân</h2>
+                    <div class="input-group">
+                        <input type="text" id="searchBox" placeholder="Tìm kiếm bệnh nhân..." class="w-full">
+                        <select id="statusFilter" class="w-full sm:w-1/2 md:w-1/4">
+                            <option value="all">Tất cả Trạng thái</option>
+                            <option value="Chờ khám">Chờ Khám</option>
+                            <option value="Sắp tới hẹn">Sắp Tới Hẹn</option>
+                            <option value="Quá hẹn">Quá Hẹn</option>
+                            <option value="Bỏ điều trị">Bỏ Điều Trị</option>
+                            <option value="Hẹn Tái Khám">Hẹn Tái Khám</option>
+                            <option value="Đã khám">Đã Khám</option>
+                        </select>
+                        <button onclick="showAddPatientModal()" class="btn btn-primary w-full sm:w-auto">Thêm Bệnh Nhân Mới</button>
+                    </div>
+                    <div class="table-container" id="tableContainer">
+                        <table class="w-full" id="patientTable">
+                            <thead>
+                                <tr>
+                                    <th data-sort="subject" class="sortable">Đối tượng<span class="sort-indicator"></span></th>
+                                    <th data-sort="name" class="sortable">Tên Bệnh Nhân<span class="sort-indicator"></span></th>
+                                    <th data-sort="lastExamDate" class="sortable">Ngày Khám<span class="sort-indicator"></span></th>
+                                    <th data-sort="nextExamDate" class="sortable">Ngày Hẹn Khám<span class="sort-indicator"></span></th>
+                                    <th data-sort="status" class="sortable">Trạng Thái<span class="sort-indicator"></span></th>
+                                    <th data-sort="revisitDays" class="th-revisit sortable">Số ngày<br>hẹn khám<span class="sort-indicator"></span></th>
+                                    <th colspan="2">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="patientTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <div class="fixed-scroll-container" id="fixedScrollContainer">
+            <div class="fixed-scroll" id="fixedScroll"><div class="fixed-scroll-inner" id="fixedScrollInner"></div></div>
+        </div>
+    </div>
+    
+    <!-- Các modal -->
+    <div id="addPatientModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">Thêm Bệnh Nhân Mới</h3>
+            <div class="modal-input-group">
+                <label for="newSubject">Đối tượng:</label>
+                <input type="text" id="newSubject">
+            </div>
+            <div class="modal-input-group">
+                <label for="newName">Tên Bệnh Nhân:</label>
+                <input type="text" id="newName">
+            </div>
+            <div class="modal-input-group">
+                <label for="newYearOfBirth">Năm sinh:</label>
+                <input type="number" id="newYearOfBirth">
+            </div>
+            <div class="modal-input-group">
+                <label for="newPhone">Số Điện Thoại:</label>
+                <input type="text" id="newPhone">
+            </div>
+            <div class="modal-input-group">
+                <label for="newRevisitDays">Số ngày hẹn khám:</label>
+                <input type="number" id="newRevisitDays" min="1">
+            </div>
+            <div class="modal-input-group">
+                <label for="newNotes">Ghi chú:</label>
+                <textarea id="newNotes"></textarea>
+            </div>
+            <div class="flex flex-col sm:flex-row justify-end gap-2 mt-4">
+                <button onclick="cancelAddPatient()" class="btn btn-secondary w-full sm:w-auto">Hủy</button>
+                <button onclick="saveNewPatient()" class="btn btn-primary w-full sm:w-auto">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editPatientModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">Sửa Thông Tin Bệnh Nhân</h3>
+            <div class="modal-input-group">
+                <label for="editSubject">Đối tượng:</label>
+                <input type="text" id="editSubject">
+            </div>
+            <div class="modal-input-group">
+                <label for="editName">Tên Bệnh Nhân:</label>
+                <input type="text" id="editName">
+            </div>
+            <div class="modal-input-group">
+                <label for="editYearOfBirth">Năm sinh:</label>
+                <input type="number" id="editYearOfBirth">
+            </div>
+            <div class="modal-input-group">
+                <label for="editPhone">Số Điện Thoại:</label>
+                <input type="text" id="editPhone">
+            </div>
+            <div class="modal-input-group">
+                <label for="editLastExamDate">Ngày Khám:</label>
+                <input type="text" id="editLastExamDate" placeholder="dd/mm/yyyy">
+            </div>
+            <div class="modal-input-group">
+                <label for="editRevisitDays">Số ngày hẹn khám:</label>
+                <input type="number" id="editRevisitDays" min="1">
+            </div>
+            <div class="modal-input-group">
+                <label for="editNotes">Ghi chú:</label>
+                <textarea id="editNotes"></textarea>
+            </div>
+            <div class="flex flex-col sm:flex-row justify-end gap-2 mt-4">
+                <button onclick="cancelEditPatient()" class="btn btn-secondary w-full sm:w-auto">Hủy</button>
+                <button onclick="saveEditedPatient()" class="btn btn-primary w-full sm:w-auto">Lưu</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="messageModal" class="modal">
+        <div class="modal-message">
+            <p id="messageText"></p>
+            <button onclick="hideMessage()" class="btn btn-primary mt-4">Đóng</button>
+        </div>
+    </div>
+
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content text-center">
+            <h3 class="text-lg font-bold mb-4">Xác Nhận Xóa Bệnh Nhân</h3>
+            <p id="deleteMessage" class="mb-4">Bạn có chắc chắn muốn xóa bệnh nhân này khỏi danh sách không? Thao tác này không thể hoàn tác.</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4 mt-4">
+                <button id="cancelDeleteBtn" class="btn btn-secondary w-full sm:w-auto">Hủy</button>
+                <button id="confirmDeleteBtn" class="btn btn-delete w-full sm:w-auto">Đồng ý</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiUpdateConfirmModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-lg font-bold mb-2">Xác Nhận Cập Nhật từ AI</h3>
+            <p class="text-sm text-gray-600 mb-4">Trợ lý AI đề xuất các thay đổi sau cho bệnh nhân <strong id="aiUpdatePatientName"></strong>. Bạn có đồng ý không?</p>
+            <div id="aiUpdateChanges" class="bg-gray-50 p-3 rounded-lg border mb-4 text-sm"></div>
+            <div class="flex flex-col sm:flex-row justify-end gap-4 mt-4">
+                <button id="cancelAiUpdateBtn" class="btn btn-secondary w-full sm:w-auto">Hủy</button>
+                <button id="confirmAiUpdateBtn" class="btn btn-primary w-full sm:w-auto">Đồng ý</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiCreateConfirmModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-lg font-bold mb-2">Xác Nhận Tạo Mới từ AI</h3>
+            <p class="text-sm text-gray-600 mb-4">Trợ lý AI đề xuất tạo bệnh nhân mới với các thông tin sau. Bạn có đồng ý không?</p>
+            <div id="aiCreateDetails" class="bg-gray-50 p-3 rounded-lg border mb-4 text-sm"></div>
+            <div class="flex flex-col sm:flex-row justify-end gap-4 mt-4">
+                <button id="cancelAiCreateBtn" class="btn btn-secondary w-full sm:w-auto">Hủy</button>
+                <button id="confirmAiCreateBtn" class="btn btn-primary w-full sm:w-auto">Đồng ý</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="dailyAppointmentModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3 class="text-xl font-bold mb-4">Bệnh nhân hẹn ngày <span id="selectedDate"></span></h3>
+            <div id="dailyAppointmentList" class="max-h-96 overflow-y-auto"></div>
+            <div class="flex justify-end mt-4">
+                <button onclick="hideModal('dailyAppointmentModal')" class="btn btn-secondary">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nút và Modal cho Trợ lý AI -->
+    <button id="aiFab" class="fixed bottom-6 right-6 bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-transform transform hover:scale-110 z-50" style="display: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+    </button>
+    <div id="aiChatModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; height: 70vh; display: flex; flex-direction: column;">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Trợ lý AI</h3>
+                <button onclick="hideAiChat()" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+            </div>
+            <div id="aiChatHistory" class="flex-grow bg-gray-50 p-3 rounded-lg overflow-y-auto mb-4 border"></div>
+            <div id="aiThinkingIndicator" class="text-center mb-2" style="display: none;">
+                <p class="text-sm text-gray-500 italic">Trợ lý AI đang suy nghĩ...</p>
+            </div>
+            <div class="flex gap-2">
+                <input type="text" id="aiChatInput" class="w-full border p-2 rounded-lg" placeholder="Hỏi hoặc yêu cầu AI cập nhật...">
+                <button id="aiChatSendBtn" class="btn btn-primary">Gửi</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            signInWithEmailAndPassword
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, addDoc, getDocs, deleteDoc, writeBatch, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Constants
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4hxPceQc1bIeKpi5k797BqT7jE5Xg_pDF5AS77PysziKOhzcQvqUPymcdXpbKBIYs/exec';
+        const firebaseConfig = {
+          apiKey: "AIzaSyAcdeeZ4XNwL8--GhYQk_2ahEYz_44kM-E",
+          authDomain: "myclinicappbvsk.firebaseapp.com",
+          projectId: "myclinicappbvsk",
+          storageBucket: "myclinicappbvsk.firebasestorage.app",
+          messagingSenderId: "464241884269",
+          appId: "1:464241884269:web:cb240275d07eda813d1364"
+        };
+        
+        // App state variables
+        let db, auth;
+        let allPatients = [], filteredPatients = [], allClinicData = {}, appointmentCounts = {};
+        let currentClinicId = null;
+        let currentSortColumn = 'status'; 
+        let sortDirection = 'asc';
+        let calendarDate = new Date();
+        let activePatientIndex = -1;
+        let activePatientDocId = null;
+        let currentEditableCell = null;
+        let aiChatHistory = []; 
+
+        // UI element variables
+        let loadingOverlay, authScreen, clinicSelectionScreen, mainApp;
+        let emailInput, passwordInput, authButton, authErrorMessage;
+        let clinicList, clinicNameElement, patientTableBody, searchBox, statusFilter;
+        let messageModal, messageText;
+        let tableContainer, fixedScrollContainer, fixedScroll;
+        let confirmDeleteBtn, cancelDeleteBtn, confirmAiUpdateBtn, cancelAiUpdateBtn, confirmAiCreateBtn, cancelAiCreateBtn;
+        let aiFab, aiChatModal, aiChatHistoryEl, aiChatInput, aiChatSendBtn, aiThinkingIndicator;
+
+        // --- Core Functions ---
+
+        window.onload = function initialize() {
+            // Assign UI elements
+            loadingOverlay = document.getElementById('loadingOverlay');
+            authScreen = document.getElementById('authScreen');
+            clinicSelectionScreen = document.getElementById('clinicSelectionScreen');
+            mainApp = document.getElementById('mainApp');
+            emailInput = document.getElementById('emailInput');
+            passwordInput = document.getElementById('passwordInput');
+            authButton = document.getElementById('authButton');
+            authErrorMessage = document.getElementById('authErrorMessage');
+            clinicList = document.getElementById('clinicList');
+            clinicNameElement = document.getElementById('clinicName');
+            patientTableBody = document.getElementById('patientTableBody');
+            searchBox = document.getElementById('searchBox');
+            statusFilter = document.getElementById('statusFilter');
+            messageModal = document.getElementById('messageModal');
+            messageText = document.getElementById('messageText');
+            tableContainer = document.getElementById('tableContainer');
+            fixedScrollContainer = document.getElementById('fixedScrollContainer');
+            fixedScroll = document.getElementById('fixedScroll');
+            confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+            confirmAiUpdateBtn = document.getElementById('confirmAiUpdateBtn');
+            cancelAiUpdateBtn = document.getElementById('cancelAiUpdateBtn');
+            confirmAiCreateBtn = document.getElementById('confirmAiCreateBtn');
+            cancelAiCreateBtn = document.getElementById('cancelAiCreateBtn');
+            aiFab = document.getElementById('aiFab');
+            aiChatModal = document.getElementById('aiChatModal');
+            aiChatHistoryEl = document.getElementById('aiChatHistory');
+            aiChatInput = document.getElementById('aiChatInput');
+            aiChatSendBtn = document.getElementById('aiChatSendBtn');
+            aiThinkingIndicator = document.getElementById('aiThinkingIndicator');
+
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            // Auth state listener
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    authScreen.style.display = 'none';
+                    mainApp.style.display = 'none';
+                    clinicSelectionScreen.style.display = 'flex';
+                    if(aiFab) aiFab.style.display = 'block'; 
+                    document.getElementById('userEmail').textContent = user.email;
+                    renderClinicSelection();
+                } else {
+                    authScreen.style.display = 'flex';
+                    clinicSelectionScreen.style.display = 'none';
+                    mainApp.style.display = 'none';
+                    if(aiFab) aiFab.style.display = 'none'; 
+                    document.body.classList.remove('app-background');
+                }
+            });
+
+            // Attach event listeners
+            authButton.addEventListener('click', handleLogin);
+            passwordInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') handleLogin(); });
+            searchBox.addEventListener('input', filterAndSearch);
+            statusFilter.addEventListener('change', filterAndSearch);
+            confirmDeleteBtn.onclick = () => { deletePatient(); hideModal('deleteConfirmModal'); };
+            cancelDeleteBtn.onclick = () => hideModal('deleteConfirmModal');
+            cancelAiUpdateBtn.onclick = () => hideModal('aiUpdateConfirmModal');
+            cancelAiCreateBtn.onclick = () => hideModal('aiCreateConfirmModal');
+            
+            window.addEventListener('resize', updateFixedScrollbar);
+            tableContainer.addEventListener('scroll', (e) => { fixedScroll.scrollLeft = e.target.scrollLeft; });
+            fixedScroll.addEventListener('scroll', (e) => { tableContainer.scrollLeft = e.target.scrollLeft; });
+            
+            document.querySelectorAll('th[data-sort]').forEach(header => {
+                header.addEventListener('click', () => {
+                    const column = header.getAttribute('data-sort');
+                    if (column === currentSortColumn) {
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSortColumn = column;
+                        sortDirection = 'asc';
+                    }
+                    filterAndSearch();
+                });
+            });
+             
+            aiFab.addEventListener('click', showAiChat);
+            aiChatSendBtn.addEventListener('click', handleAiChatRequest);
+            aiChatInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') handleAiChatRequest(); });
+        }
+
+        // --- Firebase & Backend Functions ---
+
+        function getPatientsCollectionRef(clinicId) {
+            const appId = firebaseConfig.projectId;
+            return collection(db, 'artifacts', appId, 'public', 'data', 'clinics', clinicId, 'patients');
+        }
+
+        function getPatientDocRef(clinicId, docId) {
+            const appId = firebaseConfig.projectId;
+            return doc(db, 'artifacts', appId, 'public', 'data', 'clinics', clinicId, 'patients', docId);
+        }
+
+        async function handleLogin() {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            authErrorMessage.textContent = '';
+            showLoading();
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                console.error("Authentication error:", error);
+                authErrorMessage.textContent = getFriendlyAuthError(error.code);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function updatePatient(docId, updateData) {
+            if (!docId) throw new Error("Invalid document ID for update.");
+            const patientDocRef = getPatientDocRef(currentClinicId, docId);
+            await setDoc(patientDocRef, updateData, { merge: true });
+        }
+
+        async function callBackend(endpoint, body) {
+            try {
+                const apiUrl = new URL(endpoint, window.location.origin);
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                // Đọc phản hồi dưới dạng văn bản thô trước
+                const responseText = await response.text();
+
+                if (!response.ok) {
+                    // Nếu có lỗi, cố gắng phân tích văn bản lỗi, nếu không thì ném lỗi chung
+                    let errorData = { message: `Lỗi máy chủ: ${response.statusText}` };
+                    try {
+                        errorData = JSON.parse(responseText);
+                    } catch (e) {
+                         errorData.message = responseText || errorData.message;
+                    }
+                    throw new Error(errorData.message);
+                }
+                
+                // Chỉ phân tích JSON nếu có nội dung, nếu không trả về một đối tượng trống
+                return responseText ? JSON.parse(responseText) : {};
+            } catch (error) {
+                console.error(`Lỗi khi gọi ${endpoint}:`, error);
+                window.showMessage(`Lỗi kết nối tới máy chủ: ${error.message}`);
+                throw error;
+            }
+        }
+
+        // --- AI Assistant Functions ---
+
+        window.showAiChat = function() {
+            if (aiChatHistory.length === 0) {
+                aiChatHistory.push({
+                    role: 'model',
+                    text: 'Xin chào! Tôi có thể giúp gì cho bạn? Bạn có thể yêu cầu: "Thêm BN A, 1990, sdt 0123..." hoặc "Tóm tắt ghi chú của BN B".'
+                });
+            }
+            renderAiChat();
+            showModal('aiChatModal');
+            aiChatInput.focus();
+        }
+
+        window.hideAiChat = function() {
+            hideModal('aiChatModal');
+        }
+
+        function renderAiChat() {
+            aiChatHistoryEl.innerHTML = '';
+            aiChatHistory.forEach(message => {
+                const bubble = document.createElement('div');
+                bubble.classList.add('chat-bubble');
+                let formattedText = message.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                bubble.innerHTML = formattedText;
+                if (message.role === 'user') {
+                    bubble.classList.add('user-bubble');
+                } else {
+                    bubble.classList.add('ai-bubble');
+                }
+                aiChatHistoryEl.appendChild(bubble);
+            });
+            aiChatHistoryEl.scrollTop = aiChatHistoryEl.scrollHeight;
+        }
+
+        async function handleAiChatRequest() {
+            const userQuery = aiChatInput.value.trim();
+            if (!userQuery) return;
+            aiChatHistory.push({ role: 'user', text: userQuery });
+            renderAiChat();
+            aiChatInput.value = '';
+            aiThinkingIndicator.style.display = 'block';
+            let contextData = currentClinicId ? allPatients : allClinicData;
+            try {
+                const result = await callBackend('/api/assistant', { query: userQuery, context: contextData });
+                if (result.response) {
+                    aiChatHistory.push({ role: 'model', text: result.response });
+                }
+                if (result.action === 'update' && result.patientId && result.updates) {
+                    const patientToUpdate = allPatients.find(p => p.id === result.patientId);
+                    if (patientToUpdate) {
+                        showUpdateConfirmModal(patientToUpdate, result.updates);
+                    } else {
+                        aiChatHistory.push({ role: 'model', text: `Rất tiếc, tôi không tìm thấy bệnh nhân với ID ${result.patientId} để cập nhật.` });
+                    }
+                } else if (result.action === 'create' && result.updates) {
+                     showCreateConfirmModal(result.updates);
+                }
+            } catch (error) {
+                aiChatHistory.push({ role: 'model', text: `Xin lỗi, đã có lỗi xảy ra: ${error.message}` });
+            } finally {
+                aiThinkingIndicator.style.display = 'none';
+                renderAiChat();
+            }
+        }
+        
+        function showUpdateConfirmModal(patient, updates) {
+            document.getElementById('aiUpdatePatientName').textContent = patient.name;
+            const changesDiv = document.getElementById('aiUpdateChanges');
+            changesDiv.innerHTML = '';
+            const fieldNames = { subject: 'Đối tượng', name: 'Tên', yearOfBirth: 'Năm sinh', phone: 'SĐT', lastExamDate: 'Ngày khám', nextExamDate: 'Ngày hẹn', revisitDays: 'Số ngày hẹn', notes: 'Ghi chú' };
+            for (const key in updates) {
+                const oldValue = patient[key] || '(trống)';
+                const newValue = updates[key];
+                changesDiv.innerHTML += `<div><strong>${fieldNames[key] || key}:</strong> <span class="text-red-600 line-through">${formatValue(key, oldValue)}</span> → <span class="text-green-600">${formatValue(key, newValue)}</span></div>`;
+            }
+            confirmAiUpdateBtn.onclick = () => {
+                hideModal('aiUpdateConfirmModal');
+                performAiUpdate(patient.id, updates);
+            };
+            showModal('aiUpdateConfirmModal');
+        }
+
+        function showCreateConfirmModal(newData) {
+            const detailsDiv = document.getElementById('aiCreateDetails');
+            detailsDiv.innerHTML = '';
+            const fieldNames = { subject: 'Đối tượng', name: 'Tên', yearOfBirth: 'Năm sinh', phone: 'SĐT', lastExamDate: 'Ngày khám', nextExamDate: 'Ngày hẹn', revisitDays: 'Số ngày hẹn', notes: 'Ghi chú' };
+            for (const key in newData) {
+                 if (newData[key] !== null && newData[key] !== undefined) {
+                    detailsDiv.innerHTML += `<div><strong>${fieldNames[key] || key}:</strong> <span class="text-blue-600">${formatValue(key, newData[key])}</span></div>`;
+                }
+            }
+            confirmAiCreateBtn.onclick = () => {
+                hideModal('aiCreateConfirmModal');
+                performAiCreate(newData);
+            };
+            showModal('aiCreateConfirmModal');
+        }
+
+        async function performAiUpdate(patientId, updates) {
+            showLoading();
+            try {
+                await updatePatient(patientId, updates);
+                // syncWithGoogleSheet('update', { ...updates, id: patientId });
+                window.showMessage("Đã cập nhật thông tin bệnh nhân thành công!");
+                aiChatHistory.push({ role: 'model', text: '✅ Cập nhật đã được thực hiện.' });
+            } catch (error) {
+                console.error("Lỗi khi cập nhật theo yêu cầu AI:", error);
+                window.showMessage(`Đã xảy ra lỗi: ${error.message}`);
+                aiChatHistory.push({ role: 'model', text: `❌ Rất tiếc, đã có lỗi khi thực hiện cập nhật.` });
+            } finally {
+                hideLoading();
+                renderAiChat();
+            }
+        }
+
+        async function performAiCreate(newData) {
+            showLoading();
+             if (!newData.name) {
+                window.showMessage("Tên bệnh nhân không được để trống.");
+                hideLoading();
+                return;
+            }
+            try {
+                const patientsCollectionRef = getPatientsCollectionRef(currentClinicId);
+                const docRef = await addDoc(patientsCollectionRef, newData);
+                // syncWithGoogleSheet('add', { ...newData, id: docRef.id });
+                window.showMessage("Đã thêm bệnh nhân mới thành công!");
+                aiChatHistory.push({ role: 'model', text: `✅ Đã tạo mới bệnh nhân ${newData.name}.` });
+            } catch (e) {
+                console.error("Lỗi khi tạo mới theo yêu cầu AI:", e);
+                window.showMessage("Đã xảy ra lỗi khi thêm bệnh nhân. Vui lòng thử lại.");
+                aiChatHistory.push({ role: 'model', text: `❌ Rất tiếc, đã có lỗi khi tạo mới bệnh nhân.` });
+            } finally {
+                hideLoading();
+                renderAiChat();
+            }
+        }
+
+        // --- UI & Data Display Functions ---
+
+        window.goBackToClinicSelection = function() {
+             mainApp.style.display = 'none';
+             clinicSelectionScreen.style.display = 'flex';
+             document.body.classList.remove('app-background');
+             if(aiFab) aiFab.style.display = 'block'; 
+        }
+
+        function setupAllClinicsListener() {
+            const clinics = { "THAA": "Tăng huyết áp A", "THAB": "Tăng huyết áp B", "DTDA": "Đái tháo đường A", "DTDB": "Đái tháo đường B" };
+            Object.keys(clinics).forEach(clinicId => {
+                const patientsCollectionRef = getPatientsCollectionRef(clinicId);
+                onSnapshot(patientsCollectionRef, (snapshot) => {
+                    allClinicData[clinicId] = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    aggregateAppointmentCounts();
+                    renderCalendar(calendarDate.getFullYear(), calendarDate.getMonth());
+                }, (error) => {
+                    console.error(`Error listening to clinic ${clinicId}:`, error);
+                });
+            });
+        }
+
+        function aggregateAppointmentCounts() {
+            appointmentCounts = {};
+            const todayString = toYYYYMMDD(getTodayLocal());
+            for (const clinicId in allClinicData) {
+                allClinicData[clinicId].forEach(patient => {
+                    const isConsideredExaminedToday = (patient.status === 'Đã khám' && patient.examinedOnDate === todayString);
+                    if (patient.nextExamDate && !isConsideredExaminedToday) {
+                        const dateStr = patient.nextExamDate;
+                        if (!appointmentCounts[dateStr]) appointmentCounts[dateStr] = {};
+                        if (!appointmentCounts[dateStr][clinicId]) appointmentCounts[dateStr][clinicId] = 0;
+                        appointmentCounts[dateStr][clinicId]++;
+                    }
+                });
+            }
+        }
+
+        function renderCalendar(year, month) {
+            const calendarGrid = document.getElementById('calendarGrid');
+            const monthAndYear = document.getElementById('monthAndYear');
+            calendarGrid.innerHTML = '';
+            const today = getTodayLocal();
+            monthAndYear.textContent = `Tháng ${month + 1}, ${year}`;
+            const daysOfWeek = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+            daysOfWeek.forEach(day => { calendarGrid.innerHTML += `<div class="font-bold text-gray-600">${day}</div>`; });
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let i = 0; i < firstDayOfMonth; i++) { calendarGrid.innerHTML += `<div class="day-cell empty-cell"></div>`; }
+            for (let day = 1; day <= daysInMonth; day++) {
+                const currentDate = new Date(year, month, day);
+                const dateStr = toYYYYMMDD(currentDate);
+                const isToday = currentDate.getTime() === today.getTime();
+                let dayCell = `<div class="day-cell relative ${isToday ? 'today' : ''}" onclick="showDailyAppointments('${dateStr}')"><span class="day-number">${day}</span><div class="patient-counts">`;
+                if (appointmentCounts[dateStr]) {
+                    Object.keys(appointmentCounts[dateStr]).forEach(clinicId => {
+                        dayCell += `<div class="patient-count-badge count-${clinicId}">${clinicId}:${appointmentCounts[dateStr][clinicId]}</div>`;
+                    });
+                }
+                dayCell += `</div></div>`;
+                calendarGrid.innerHTML += dayCell;
+            }
+        }
+
+        window.showDailyAppointments = function(dateStr) {
+            const selectedDateElement = document.getElementById('selectedDate');
+            const appointmentListElement = document.getElementById('dailyAppointmentList');
+            const dateObj = parseDate(dateStr);
+            selectedDateElement.textContent = formatDate(dateObj);
+            appointmentListElement.innerHTML = '';
+            let appointmentsForDay = [];
+            const clinics = { "THAA": "Tăng huyết áp A", "THAB": "Tăng huyết áp B", "DTDA": "Đái tháo đường A", "DTDB": "Đái tháo đường B" };
+            const todayString = toYYYYMMDD(getTodayLocal());
+            for (const clinicId in allClinicData) {
+                allClinicData[clinicId].forEach(patient => {
+                    const isConsideredExaminedToday = (patient.status === 'Đã khám' && patient.examinedOnDate === todayString);
+                    if (patient.nextExamDate === dateStr && !isConsideredExaminedToday) {
+                        appointmentsForDay.push({ ...patient, clinicName: clinics[clinicId] || clinicId });
+                    }
+                });
+            }
+            if (appointmentsForDay.length > 0) {
+                const groupedByClinic = appointmentsForDay.reduce((acc, patient) => {
+                    if (!acc[patient.clinicName]) acc[patient.clinicName] = [];
+                    acc[patient.clinicName].push(patient);
+                    return acc;
+                }, {});
+                for (const clinic in groupedByClinic) { groupedByClinic[clinic].sort((a, b) => a.name.localeCompare(b.name)); }
+                const sortedClinics = Object.keys(groupedByClinic).sort((a, b) => a.localeCompare(b));
+                let listHtml = '';
+                sortedClinics.forEach(clinicName => {
+                    listHtml += `<div class="mb-4"><h4 class="text-lg font-semibold bg-gray-100 p-2 rounded-t-md text-gray-800">${clinicName}</h4><ul class="divide-y divide-gray-200 border border-t-0 rounded-b-md">`;
+                    groupedByClinic[clinicName].forEach(patient => {
+                        listHtml += `<li class="py-3 px-2 hover:bg-gray-50"><div class="flex items-center justify-between"><p class="text-md font-medium text-gray-900">${patient.name}</p><p class="text-sm text-gray-500">${patient.phone || 'N/A'}</p></div></li>`;
+                    });
+                    listHtml += `</ul></div>`;
+                });
+                appointmentListElement.innerHTML = listHtml;
+            } else {
+                appointmentListElement.innerHTML = '<p class="text-center text-gray-500 py-4">Không có bệnh nhân nào hẹn vào ngày này.</p>';
+            }
+            showModal('dailyAppointmentModal');
+        };
+
+        function renderClinicSelection() {
+            showLoading();
+            setupAllClinicsListener();
+            renderCalendar(calendarDate.getFullYear(), calendarDate.getMonth());
+            clinicList.innerHTML = '';
+            const clinics = { "THAA": "Tăng huyết áp A", "THAB": "Tăng huyết áp B", "DTDA": "Đái tháo đường A", "DTDB": "Đái tháo đường B" };
+            for (const clinicId in clinics) {
+                const clinicName = clinics[clinicId];
+                const card = document.createElement('div');
+                card.className = 'p-4 rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow cursor-pointer';
+                card.innerHTML = `<h3 class="text-xl font-semibold text-gray-800">${clinicName}</h3>`;
+                card.onclick = () => selectClinic(clinicId, clinicName);
+                clinicList.appendChild(card);
+            }
+            document.getElementById('prevMonthBtn').onclick = () => {
+                calendarDate.setMonth(calendarDate.getMonth() - 1);
+                renderCalendar(calendarDate.getFullYear(), calendarDate.getMonth());
+            };
+            document.getElementById('nextMonthBtn').onclick = () => {
+                calendarDate.setMonth(calendarDate.getMonth() + 1);
+                renderCalendar(calendarDate.getFullYear(), calendarDate.getMonth());
+            };
+            hideLoading();
+        }
+
+        async function selectClinic(clinicId, clinicName) {
+            showLoading();
+            currentClinicId = clinicId;
+            clinicNameElement.textContent = clinicName;
+            clinicSelectionScreen.style.display = 'none';
+            mainApp.style.display = 'block';
+            document.body.classList.add('app-background');
+            const patientsCollectionRef = getPatientsCollectionRef(clinicId);
+            onSnapshot(patientsCollectionRef, (snapshot) => {
+                const todayString = toYYYYMMDD(getTodayLocal());
+                const updateBatch = writeBatch(db);
+                let hasUpdates = false;
+                allPatients = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    let patientData = { ...data, id: doc.id };
+                    if (patientData.status === 'Đã khám' && patientData.examinedOnDate !== todayString) {
+                        updateBatch.update(doc.ref, { status: 'Hẹn Tái Khám', examinedOnDate: deleteField() });
+                        hasUpdates = true;
+                    }
+                    return patientData;
+                });
+                if(hasUpdates) { updateBatch.commit().catch(err => console.error("Error auto-updating status:", err)); }
+                filterAndSearch();
+                hideLoading();
+            }, (error) => {
+                console.error("Error listening to data:", error);
+                window.showMessage("Error loading patient data. Please try again.");
+                hideLoading();
+            });
+        }
+
+        function filterAndSearch() {
+            const searchText = searchBox.value.toLowerCase();
+            const statusFilterValue = statusFilter.value;
+            const today = getTodayLocal();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            const dayOfWeek = today.getDay();
+            let nextMonday = null;
+            if (dayOfWeek === 5) { // Friday
+                nextMonday = new Date(today);
+                nextMonday.setDate(today.getDate() + 3);
+            }
+            let processedPatients = allPatients.map(patient => {
+                let p = { ...patient };
+                if (p.status !== 'Đã khám') {
+                    if (p.nextExamDate) {
+                        const nextDate = parseDate(p.nextExamDate);
+                        if (nextDate) {
+                            const diff = nextDate.getTime() - today.getTime();
+                            if (diff < 0) {
+                                const overdueDays = Math.floor(-diff / (1000*60*60*24));
+                                p.status = overdueDays >= 120 ? 'Bỏ điều trị' : 'Quá hẹn';
+                            } else if (diff === 0) { p.status = 'Chờ khám'; } 
+                            else if (nextDate.getTime() === tomorrow.getTime() || (nextMonday && nextDate.getTime() === nextMonday.getTime())) { p.status = 'Sắp tới hẹn'; } 
+                            else { p.status = 'Hẹn Tái Khám'; }
+                        }
+                    } else if (!p.lastExamDate) { p.status = 'Chờ khám'; }
+                }
+                return p;
+            });
+            processedPatients.sort((a, b) => {
+                const statusOrder = { 'Chờ khám': 1, 'Đã khám': 2, 'Quá hẹn': 3, 'Sắp tới hẹn': 4, 'Hẹn Tái Khám': 5, 'Bỏ điều trị': 6 };
+                let valA = a[currentSortColumn], valB = b[currentSortColumn];
+                if (currentSortColumn === 'status') {
+                    valA = statusOrder[a.status] || 99;
+                    valB = statusOrder[b.status] || 99;
+                } else {
+                    valA = valA || ''; valB = valB || '';
+                    if (currentSortColumn.includes('Date')) {
+                        valA = valA ? parseDate(valA).getTime() : 0;
+                        valB = valB ? parseDate(valB).getTime() : 0;
+                    }
+                    if (typeof valA === 'string') { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
+                }
+                let comparison = valA > valB ? 1 : (valA < valB ? -1 : 0);
+                return sortDirection === 'desc' ? -comparison : comparison;
+            });
+            filteredPatients = processedPatients.filter(p => {
+                const matchesSearch = (p.name && p.name.toLowerCase().includes(searchText)) || (p.phone && p.phone.includes(searchText));
+                const matchesStatus = (statusFilterValue === 'all') || (p.status === statusFilterValue);
+                return matchesSearch && matchesStatus;
+            });
+            renderTable();
+        }
+
+        function renderTable() {
+            const todayString = toYYYYMMDD(getTodayLocal());
+            patientTableBody.innerHTML = '';
+            filteredPatients.forEach((patient, index) => {
+                const revisitDaysValue = patient.revisitDays !== undefined && patient.revisitDays !== null ? patient.revisitDays : '';
+                const showUndo = patient.status === 'Đã khám' && patient.examinedOnDate === todayString;
+                const row = document.createElement('tr');
+                row.innerHTML = `<td data-label="Đối tượng">${patient.subject || ''}</td>
+                    <td data-label="Tên Bệnh Nhân"><div class="cursor-pointer font-semibold hover:underline" onclick="toggleNotes(${index})">${patient.name}</div><div class="text-sm text-gray-500">${patient.yearOfBirth || ''}</div></td>
+                    <td data-label="Ngày Khám">${formatDate(patient.lastExamDate) || ''}</td>
+                    <td data-label="Ngày Hẹn Khám">${formatDate(patient.nextExamDate) || ''}</td>
+                    <td data-label="Trạng Thái"><span class="status-badge ${getStatusClass(patient.status)}">${patient.status}</span></td>
+                    <td data-label="Số ngày hẹn khám" class="editable-cell" onclick="editRevisitDays(${index}, event)"><div class="cell-content">${revisitDaysValue}</div></td>
+                    <td data-label="Đánh dấu đã khám"><button onclick="${showUndo ? `undoExamined(${index})` : `markAsExamined(${index})`}" class="btn ${showUndo ? 'btn-undo' : 'btn-success'} px-4 py-2">${showUndo ? 'Hoàn Tác' : 'Đã Khám'}</button></td>
+                    <td data-label="Thao tác" class="action-buttons"><button onclick="showEditPatientModal(${index})" class="text-xs text-green-500 hover:underline">Sửa</button><button onclick="confirmDeletePatient(${index})" class="text-xs text-red-500 hover:underline">Xóa</button></td>`;
+                patientTableBody.appendChild(row);
+                const notesRow = document.createElement('tr');
+                notesRow.className = 'notes-row';
+                notesRow.innerHTML = `<td colspan="8" class="notes-cell"><div class="font-semibold text-gray-700 mb-2">Ghi chú:</div><div class="notes-text-display">${patient.notes || 'Không có ghi chú.'}</div></td>`;
+                patientTableBody.appendChild(notesRow);
+            });
+            updateFixedScrollbar();
+            updateSortIndicators();
+        }
+
+        // --- Patient Action Functions ---
+
+        window.markAsExamined = async function(index) {
+            showLoading();
+            const patient = filteredPatients[index];
+            const today = getTodayLocal();
+            let nextExamDate = null;
+            const revisitDays = patient.revisitDays;
+            if (revisitDays !== undefined && revisitDays !== null && !isNaN(revisitDays)) {
+                const tempDate = getTodayLocal();
+                tempDate.setDate(tempDate.getDate() + revisitDays);
+                nextExamDate = toYYYYMMDD(tempDate);
+            }
+            const updatePayload = { lastExamDate: toYYYYMMDD(today), nextExamDate: nextExamDate, status: 'Đã khám', examinedOnDate: toYYYYMMDD(today) };
+            try {
+                await updatePatient(patient.id, updatePayload);
+            } catch (e) {
+                console.error("Error updating document:", e);
+                window.showMessage("An error occurred while saving. Please try again.");
+            } finally { hideLoading(); }
+        };
+
+        window.undoExamined = async function(index) {
+            showLoading();
+            const patient = filteredPatients[index];
+            const revertedUpdate = { status: 'Hẹn Tái Khám', examinedOnDate: deleteField() };
+            try {
+                await updatePatient(patient.id, revertedUpdate);
+            } catch (e) {
+                console.error("Error reverting document:", e);
+                window.showMessage("An error occurred while undoing. Please try again.");
+            } finally { hideLoading(); }
+        };
+
+        window.editRevisitDays = function(index, event) {
+            if (currentEditableCell) saveRevisitDays(currentEditableCell.parentElement.dataset.index);
+            const cell = event.currentTarget;
+            currentEditableCell = cell;
+            const patient = filteredPatients[index];
+            const currentValue = patient.revisitDays !== null && patient.revisitDays !== undefined ? patient.revisitDays : '';
+            cell.innerHTML = `<input type="number" value="${currentValue}" min="0" class="w-full h-full" id="revisitDaysInput_${index}" onblur="saveRevisitDays(${index})" onkeydown="handleKeyDown(${index}, event)">`;
+            const input = document.getElementById(`revisitDaysInput_${index}`);
+            input.focus();
+            input.select();
+        };
+
+        window.handleKeyDown = function(index, event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); 
+                saveRevisitDays(index);
+            } else if (event.key === 'Escape') {
+                const originalValue = filteredPatients[index].revisitDays;
+                event.target.parentElement.innerHTML = `<div class="cell-content">${originalValue !== null && originalValue !== undefined ? originalValue : ''}</div>`;
+                currentEditableCell = null;
+            }
+        };
+
+        window.saveRevisitDays = async function(index) {
+            const cell = currentEditableCell;
+            if (!cell) return;
+            const input = cell.querySelector('input');
+            if (!input) return;
+            currentEditableCell = null; 
+            const newDays = input.value === '' ? null : parseInt(input.value, 10);
+            const patient = filteredPatients[index];
+            if (newDays === patient.revisitDays) {
+                 cell.innerHTML = `<div class="cell-content">${newDays !== null ? newDays : ''}</div>`;
+                 return;
+            }
+            showLoading();
+            const lastExamDate = parseDate(patient.lastExamDate) || getTodayLocal();
+            let newNextExamDate = null;
+            if (newDays !== null) {
+                const nextExamDate = new Date(lastExamDate);
+                nextExamDate.setDate(lastExamDate.getDate() + newDays);
+                newNextExamDate = toYYYYMMDD(nextExamDate);
+            }
+            try {
+                const updatePayload = { revisitDays: newDays, nextExamDate: newNextExamDate };
+                await updatePatient(patient.id, updatePayload);
+            } catch (e) {
+                console.error("Error updating document:", e);
+                window.showMessage("An error occurred while saving. Please try again.");
+            } finally { hideLoading(); }
+        };
+
+        window.showAddPatientModal = function() {
+            document.getElementById('newSubject').value = '';
+            document.getElementById('newName').value = '';
+            document.getElementById('newYearOfBirth').value = '';
+            document.getElementById('newPhone').value = '';
+            document.getElementById('newRevisitDays').value = '';
+            document.getElementById('newNotes').value = '';
+            showModal('addPatientModal');
+        }
+
+        window.saveNewPatient = async function() {
+            showLoading();
+            const revisitDaysValue = document.getElementById('newRevisitDays').value;
+            const newRevisitDays = revisitDaysValue === '' ? null : parseInt(revisitDaysValue, 10);
+            const today = getTodayLocal();
+            let nextExamDate = null;
+            if (newRevisitDays !== null) {
+                const tempDate = getTodayLocal();
+                tempDate.setDate(today.getDate() + newRevisitDays);
+                nextExamDate = toYYYYMMDD(tempDate);
+            }
+            const newPatientData = { subject: document.getElementById('newSubject').value, name: document.getElementById('newName').value, yearOfBirth: parseInt(document.getElementById('newYearOfBirth').value, 10) || null, phone: document.getElementById('newPhone').value, lastExamDate: toYYYYMMDD(today), nextExamDate: nextExamDate, revisitDays: newRevisitDays, notes: document.getElementById('newNotes').value, status: '' };
+            if (!newPatientData.name) {
+                window.showMessage("Tên bệnh nhân không được để trống.");
+                hideLoading();
+                return;
+            }
+            try {
+                const patientsCollectionRef = getPatientsCollectionRef(currentClinicId);
+                await addDoc(patientsCollectionRef, newPatientData);
+                hideModal('addPatientModal');
+                window.showMessage("Đã thêm bệnh nhân mới thành công!");
+            } catch (e) {
+                console.error("Error adding document:", e);
+                window.showMessage("Đã xảy ra lỗi khi thêm bệnh nhân. Vui lòng thử lại.");
+            } finally { hideLoading(); }
+        }
+
+        window.cancelAddPatient = function() { hideModal('addPatientModal'); }
+
+        window.showEditPatientModal = function(index) {
+            const patient = filteredPatients[index];
+            activePatientIndex = index;
+            activePatientDocId = patient.id;
+            document.getElementById('editSubject').value = patient.subject || '';
+            document.getElementById('editName').value = patient.name || '';
+            document.getElementById('editYearOfBirth').value = patient.yearOfBirth || '';
+            document.getElementById('editPhone').value = patient.phone || '';
+            document.getElementById('editLastExamDate').value = formatDate(patient.lastExamDate);
+            document.getElementById('editRevisitDays').value = patient.revisitDays !== null && patient.revisitDays !== undefined ? patient.revisitDays : '';
+            document.getElementById('editNotes').value = patient.notes || '';
+            showModal('editPatientModal');
+        }
+
+        window.saveEditedPatient = async function() {
+            showLoading();
+            const revisitDaysValue = document.getElementById('editRevisitDays').value;
+            const editedRevisitDays = revisitDaysValue === '' ? null : parseInt(revisitDaysValue, 10);
+            const lastExamDateString_ddmmyyyy = document.getElementById('editLastExamDate').value;
+            const parsedLastExamDate = parseDate(lastExamDateString_ddmmyyyy);
+            let newNextExamDate = null;
+            if (parsedLastExamDate && editedRevisitDays !== null) {
+                const nextExamDate = new Date(parsedLastExamDate);
+                nextExamDate.setDate(nextExamDate.getDate() + editedRevisitDays);
+                newNextExamDate = toYYYYMMDD(nextExamDate);
+            }
+            const updatedPatient = { subject: document.getElementById('editSubject').value, name: document.getElementById('editName').value, yearOfBirth: parseInt(document.getElementById('editYearOfBirth').value, 10) || null, phone: document.getElementById('editPhone').value, lastExamDate: parsedLastExamDate ? toYYYYMMDD(parsedLastExamDate) : null, nextExamDate: newNextExamDate, revisitDays: editedRevisitDays, notes: document.getElementById('editNotes').value };
+            if (!updatedPatient.name) {
+                window.showMessage("Tên bệnh nhân không được để trống.");
+                hideLoading();
+                return;
+            }
+            try {
+                await updatePatient(activePatientDocId, updatedPatient);
+                hideModal('editPatientModal');
+                window.showMessage("Đã lưu thay đổi thành công!");
+            } catch (e) {
+                console.error("Error updating document:", e);
+                window.showMessage("Đã xảy ra lỗi khi lưu. Vui lòng thử lại.");
+            } finally { hideLoading(); }
+        }
+
+        window.cancelEditPatient = function() { hideModal('editPatientModal'); }
+
+        window.confirmDeletePatient = function(index) {
+            activePatientDocId = filteredPatients[index].id;
+            document.getElementById('deleteMessage').textContent = `Bạn có chắc chắn muốn xóa bệnh nhân "${filteredPatients[index].name}" khỏi danh sách không? Thao tác này không thể hoàn tác.`;
+            showModal('deleteConfirmModal');
+        }
+
+        window.deletePatient = async function() {
+            showLoading();
+            try {
+                const patientDocRef = getPatientDocRef(currentClinicId, activePatientDocId);
+                await deleteDoc(patientDocRef);
+                window.showMessage("Đã xóa bệnh nhân thành công.");
+            } catch (e) {
+                console.error("Error deleting document:", e);
+                window.showMessage("Đã xảy ra lỗi khi xóa bệnh nhân. Vui lòng thử lại.");
+            } finally { hideLoading(); }
+        }
+
+        // --- Utility & Helper Functions ---
+
+        function getFriendlyAuthError(errorCode) {
+            switch (errorCode) {
+                case 'auth/invalid-email':
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    return 'Tài khoản hoặc mật khẩu không chính xác.';
+                default:
+                    return 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+            }
+        }
+
+        function showLoading() { loadingOverlay.style.display = 'flex'; }
+        function hideLoading() { loadingOverlay.style.display = 'none'; }
+        window.showModal = function(modalId) { document.getElementById(modalId).style.display = 'flex'; }
+        window.hideModal = function(modalId) { document.getElementById(modalId).style.display = 'none'; }
+        window.showMessage = function(message) {
+            messageText.textContent = message;
+            showModal('messageModal');
+        }
+        window.hideMessage = function() { hideModal('messageModal'); }
+
+        function getTodayLocal() {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            return now;
+        }
+
+        function parseDate(dateInput) {
+            if (!dateInput) return null;
+            if (typeof dateInput.toDate === 'function') {
+                const d = dateInput.toDate();
+                d.setHours(0,0,0,0);
+                return d;
+            }
+            if (dateInput instanceof Date) { return isNaN(dateInput.getTime()) ? null : dateInput; }
+            if (typeof dateInput === 'string') {
+                let parsableString = dateInput;
+                const localMatch = parsableString.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+                if (localMatch) { parsableString = `${localMatch[3]}/${localMatch[2]}/${localMatch[1]}`; } 
+                else { parsableString = parsableString.replace(/-/g, '/').split('T')[0]; }
+                const date = new Date(parsableString);
+                if (isNaN(date.getTime())) return null;
+                date.setHours(0, 0, 0, 0);
+                return date;
+            }
+            return null;
+        }
+
+        function formatDate(dateInput) {
+            const date = parseDate(dateInput);
+            if (!date) return ''; 
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function formatValue(key, value) {
+            if (key.toLowerCase().includes('date')) {
+                return formatDate(value);
+            }
+            return value;
+        }
+        
+        function toYYYYMMDD(dateInput) {
+            const date = parseDate(dateInput);
+            if (!date) return null;
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getStatusClass(status) {
+            const classes = { 'Quá hẹn': 'badge-overdue', 'Bỏ điều trị': 'badge-discontinued', 'Hẹn Tái Khám': 'badge-revisit', 'Đã khám': 'badge-examined', 'Chờ khám': 'badge-scheduled', 'Sắp tới hẹn': 'badge-upcoming' };
+            return classes[status] || 'badge-secondary';
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('th .sort-indicator').forEach(span => span.textContent = '');
+            const activeHeader = document.querySelector(`th[data-sort="${currentSortColumn}"] .sort-indicator`);
+            if (activeHeader) activeHeader.textContent = sortDirection === 'asc' ? ' ▲' : ' ▼';
+        }
+
+        window.toggleNotes = function(index) {
+            const notesRow = patientTableBody.children[index * 2 + 1];
+            if (notesRow) notesRow.style.display = notesRow.style.display === 'table-row' ? 'none' : 'table-row';
+        }
+
+        function updateFixedScrollbar() {
+            const table = document.getElementById('patientTable');
+            if (!table) return;
+            const tableWidth = table.offsetWidth;
+            if (tableContainer) {
+                const tableContainerWidth = tableContainer.clientWidth;
+                 if (fixedScrollContainer) {
+                    if (tableWidth > tableContainerWidth) {
+                        fixedScrollContainer.style.display = 'flex';
+                        document.getElementById('fixedScrollInner').style.width = `${tableWidth}px`;
+                    } else {
+                        fixedScrollContainer.style.display = 'none';
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+
+
