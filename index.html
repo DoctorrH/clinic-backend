@@ -467,7 +467,7 @@
         .count-DTDA { background-color: #22c55e; } /* green */
         .count-DTDB { background-color: #3b82f6; } /* blue */
 
-        /* CSS cho Trợ lý AI */
+        /* --- MỚI: CSS cho Trợ lý AI --- */
         #aiChatHistory .chat-bubble {
             padding: 8px 12px;
             border-radius: 12px;
@@ -490,7 +490,7 @@
     </style>
 </head>
 <body>
-    <!-- Màn hình đăng nhập -->
+    <!-- Màn hình đăng nhập (không thay đổi) -->
     <div class="fullscreen-center" id="authScreen">
         <div class="center-card">
             <svg class="login-logo text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -508,7 +508,7 @@
         </div>
     </div>
 
-    <!-- Màn hình chọn phòng khám -->
+    <!-- Màn hình chọn phòng khám (không thay đổi) -->
     <div class="fullscreen-center" id="clinicSelectionScreen" style="display: none;">
         <div class="center-card">
             <div class="flex justify-between items-center">
@@ -533,7 +533,7 @@
         </div>
     </div>
     
-    <!-- Màn hình ứng dụng chính -->
+    <!-- Màn hình ứng dụng chính (không thay đổi) -->
     <div id="mainApp" style="display: none;">
          <div class="loading-overlay" id="loadingOverlay">
             <div class="spinner"></div>
@@ -594,7 +594,7 @@
         </div>
     </div>
     
-    <!-- Các modal -->
+    <!-- Các modal (không thay đổi) -->
     <div id="addPatientModal" class="modal">
         <div class="modal-content">
             <h3 class="text-xl font-bold mb-4">Thêm Bệnh Nhân Mới</h3>
@@ -718,7 +718,7 @@
         </div>
     </div>
 
-    <!-- Nút và Modal cho Trợ lý AI -->
+    <!-- --- MỚI: Nút và Modal cho Trợ lý AI --- -->
     <button id="aiFab" class="fixed bottom-6 right-6 bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-transform transform hover:scale-110 z-50" style="display: none;">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -745,7 +745,7 @@
 
 
     <script type="module">
-        // Firebase imports
+        // Firebase imports (không thay đổi)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
             getAuth, 
@@ -754,7 +754,7 @@
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, addDoc, getDocs, deleteDoc, writeBatch, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Constants
+        // Constants (không thay đổi)
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4hxPceQc1bIeKpi5k797BqT7jE5Xg_pDF5AS77PysziKOhzcQvqUPymcdXpbKBIYs/exec';
         const firebaseConfig = {
           apiKey: "AIzaSyAcdeeZ4XNwL8--GhYQk_2ahEYz_44kM-E",
@@ -775,7 +775,7 @@
         let activePatientIndex = -1;
         let activePatientDocId = null;
         let currentEditableCell = null;
-        let aiChatHistory = []; 
+        let aiChatHistory = []; // --- MỚI: Biến lưu trữ lịch sử trò chuyện AI
 
         // Biến UI
         let loadingOverlay, authScreen, clinicSelectionScreen, mainApp;
@@ -784,9 +784,9 @@
         let handleAiImportBtn, excelUploadInput, messageModal, messageText;
         let tableContainer, fixedScrollContainer, fixedScroll;
         let confirmDeleteBtn, cancelDeleteBtn;
-        let aiFab, aiChatModal, aiChatHistoryEl, aiChatInput, aiChatSendBtn, aiThinkingIndicator;
+        let aiFab, aiChatModal, aiChatHistoryEl, aiChatInput, aiChatSendBtn, aiThinkingIndicator; // --- MỚI: Biến UI cho AI
 
-        // Hàm helper cho đường dẫn Firestore
+        // Hàm helper cho đường dẫn Firestore (không thay đổi)
         function getPatientsCollectionRef(clinicId) {
             const appId = firebaseConfig.projectId;
             return collection(db, 'artifacts', appId, 'public', 'data', 'clinics', clinicId, 'patients');
@@ -797,7 +797,7 @@
             return doc(db, 'artifacts', appId, 'public', 'data', 'clinics', clinicId, 'patients', docId);
         }
 
-        // Logic xác thực
+        // Logic xác thực (không thay đổi)
         async function handleLogin() {
             const email = emailInput.value;
             const password = passwordInput.value;
@@ -830,7 +830,7 @@
              mainApp.style.display = 'none';
              clinicSelectionScreen.style.display = 'flex';
              document.body.classList.remove('app-background');
-             if(aiFab) aiFab.style.display = 'block';
+             if(aiFab) aiFab.style.display = 'block'; // --- CẬP NHẬT: Hiển thị nút AI khi quay lại
         }
 
         function initialize() {
@@ -858,7 +858,7 @@
             confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
             cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 
-            // Gán các phần tử UI của AI
+            // --- MỚI: Gán các phần tử UI của AI
             aiFab = document.getElementById('aiFab');
             aiChatModal = document.getElementById('aiChatModal');
             aiChatHistoryEl = document.getElementById('aiChatHistory');
@@ -877,14 +877,14 @@
                     authScreen.style.display = 'none';
                     mainApp.style.display = 'none';
                     clinicSelectionScreen.style.display = 'flex';
-                    aiFab.style.display = 'block';
+                    aiFab.style.display = 'block'; // --- CẬP NHẬT: Hiển thị nút AI khi đã đăng nhập
                     document.getElementById('userEmail').textContent = user.email;
                     renderClinicSelection();
                 } else {
                     authScreen.style.display = 'flex';
                     clinicSelectionScreen.style.display = 'none';
                     mainApp.style.display = 'none';
-                    aiFab.style.display = 'none';
+                    aiFab.style.display = 'none'; // --- CẬP NHẬT: Ẩn nút AI khi chưa đăng nhập
                     document.body.classList.remove('app-background');
                 }
             });
@@ -918,7 +918,7 @@
                 });
             });
              
-            // Gán sự kiện cho AI Chat
+            // --- MỚI: Gán sự kiện cho AI Chat
             aiFab.addEventListener('click', window.showAiChat);
             aiChatSendBtn.addEventListener('click', handleAiChatRequest);
             aiChatInput.addEventListener('keyup', (event) => {
@@ -928,7 +928,7 @@
 
         window.onload = initialize;
 
-        // --- Các hàm cho Trợ lý AI ---
+        // --- MỚI: Các hàm cho Trợ lý AI ---
         window.showAiChat = function() {
             if (aiChatHistory.length === 0) {
                 aiChatHistory.push({
@@ -950,6 +950,7 @@
             aiChatHistory.forEach(message => {
                 const bubble = document.createElement('div');
                 bubble.classList.add('chat-bubble');
+                // Chuyển đổi markdown cơ bản (in đậm) thành HTML
                 let formattedText = message.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 bubble.innerHTML = formattedText;
 
@@ -996,8 +997,7 @@
 
         async function callGeminiForChat(contextData, contextDescription, userQuery) {
             const apiKey = ""; 
-            // --- THAY ĐỔI: Sử dụng mô hình AI nhanh hơn ---
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
             const dataString = JSON.stringify(contextData);
             const today = new Date().toLocaleDateString('vi-VN');
@@ -1046,12 +1046,11 @@
             }
         }
 
-        // --- Các hàm xử lý nhập liệu bằng AI ---
+        // Các hàm hiện có (không thay đổi)
         async function callGeminiForPatientJsonArray(rawData) {
             showLoading();
             const apiKey = "";
-            // --- THAY ĐỔI: Sử dụng mô hình AI nhanh hơn ---
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
             const prompt = `Bạn là một trợ lý phân tích dữ liệu thông minh cho một ứng dụng y tế. Nhiệm vụ của bạn là chuyển đổi dữ liệu văn bản thô, có thể được sao chép từ một bảng tính hoặc nhập thủ công, thành một mảng JSON có cấu trúc gồm các đối tượng bệnh nhân.
             QUY TẮC PHÂN TÍCH CÚ PHÁP:
             - Mỗi dòng trong đầu vào thường đại diện cho một bệnh nhân.
@@ -1194,8 +1193,6 @@
                 hideLoading();
             }
         }
-
-        // --- Các hàm tiện ích và quản lý dữ liệu khác (không thay đổi) ---
         async function syncWithGoogleSheet(action, patientData) {
             if (!currentClinicId || !APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
                 console.warn("Cannot sync: Invalid clinic ID or Apps Script URL.");
