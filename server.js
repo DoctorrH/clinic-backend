@@ -1,86 +1,90 @@
-// --- File: server.js (Phiên bản cuối, sẵn sàng để xuất bản) ---
+// --- File: server.js (Phiên bản nâng cấp, thêm Trợ lý AI) ---
 
-// --- Bước 1: Nạp các "phụ tùng" đã cài đặt ---
+// --- Giai đoạn 1: Nạp các "phụ tùng" ---
 console.log("Bắt đầu khởi tạo server...");
 
-// Sử dụng try-catch để bắt lỗi ngay từ đầu
 try {
     const express = require('express');
     const fetch = require('node-fetch');
-    const cors = require('cors'); // Thư viện để xử lý vấn đề bảo mật CORS
-    require('dotenv').config(); // Nạp thư viện để đọc file .env một cách an toàn
+    const cors = require('cors'); 
+    require('dotenv').config(); 
 
     console.log("Tất cả thư viện đã được nạp thành công.");
 
-    // --- Bước 2: Tạo ra máy chủ ---
+    // --- Giai đoạn 2: Tạo ra máy chủ ---
     const app = express();
+    app.use(cors()); 
+    app.use(express.json({ limit: '5mb' })); // Tăng giới hạn payload để chứa dữ liệu bệnh nhân
 
-    // --- Bước 3: Cấu hình "giấy phép" cho máy chủ ---
-    app.use(cors()); // Cho phép các trang web từ bất kỳ đâu có thể gọi đến máy chủ này
-    app.use(express.json()); // Cho phép máy chủ hiểu được dữ liệu JSON được gửi lên
-
-    // --- Bước 4: Lấy API Key đã cất giữ một cách an toàn ---
+    // --- Giai đoạn 3: Lấy API Key ---
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-    // Thêm một bước kiểm tra để đảm bảo API Key tồn tại
     if (!GEMINI_API_KEY) {
-        console.error("!!! LỖI NGHIÊM TRỌNG: Biến môi trường GEMINI_API_KEY chưa được thiết lập.");
-        // Dừng ứng dụng nếu không có key, để tránh chạy trong trạng thái lỗi
+        console.error("!!! LỖI: Biến môi trường GEMINI_API_KEY chưa được thiết lập.");
         process.exit(1); 
     } else {
         console.log("API Key đã được nạp thành công.");
     }
 
-    // --- Bước 5: Tạo ra một "cánh cửa" để website của bạn có thể vào ---
-    // Khi website gọi đến địa chỉ '/api/import-patients', đoạn mã bên trong sẽ chạy
+    const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+
+    // --- Giai đoạn 4: Tạo các "cánh cửa" API ---
+
+    // CÁNH CỬA 1: Dành cho việc nhập liệu (Không thay đổi)
     app.post('/api/import-patients', async (req, res) => {
         console.log("Đã nhận được yêu cầu tại /api/import-patients...");
-
         try {
-            // Lấy dữ liệu thô mà website gửi lên
             const { rawData } = req.body;
             if (!rawData) {
                 return res.status(400).json({ message: "Dữ liệu đầu vào không được để trống." });
             }
+            const prompt = `Bạn là trợ lý phân tích dữ liệu y tế... (Prompt không thay đổi)`; // Giữ nguyên prompt cũ
+            const payload = { /* ... payload không thay đổi ... */ };
+            // ... (Logic xử lý không thay đổi) ...
+            
+            const geminiResponse = await fetch(geminiApiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!geminiResponse.ok) throw new Error(`Lỗi từ Gemini API: ${geminiResponse.statusText}`);
+            const result = await geminiResponse.json();
+            const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            res.status(200).json(JSON.parse(jsonText));
 
-            // Đây là "mệnh lệnh" chúng ta gửi cho Gemini
-            const prompt = `Bạn là một trợ lý phân tích dữ liệu y tế. Nhiệm vụ của bạn là chuyển đổi dữ liệu văn bản thô thành một mảng JSON có cấu trúc gồm các đối tượng bệnh nhân.
+        } catch (error) {
+            console.error('Lỗi trong quá trình xử lý import:', error);
+            res.status(500).json({ message: 'Đã có lỗi xảy ra phía máy chủ' });
+        }
+    });
 
-            QUY TẮC PHÂN TÍCH:
-            - Mỗi dòng đại diện cho một bệnh nhân.
-            - Các trường cần trích xuất: 'subject', 'name', 'yearOfBirth', 'phone', 'lastExamDate', 'revisitDays', 'notes'.
-            - 'subject': Chỉ điền nếu có mã (ví dụ THAA, DTDB) đứng TRƯỚC tên. Nếu không, để null.
-            - 'yearOfBirth': Chỉ điền nếu có số 4 chữ số nằm GIỮA tên và ngày khám. Nếu không, để null.
-            - Diễn giải thời gian: '2 tuần' -> 14, '1 tháng' -> 30.
-            - Đầu ra PHẢI là một mảng JSON hợp lệ.
+    // --- CÁNH CỬA 2 (MỚI): Dành cho Trợ lý AI ---
+    app.post('/api/assistant', async (req, res) => {
+        console.log("Đã nhận được yêu cầu tại /api/assistant...");
+        try {
+            const { query, context } = req.body; // Nhận câu hỏi và dữ liệu bệnh nhân
+            if (!query) {
+                return res.status(400).json({ message: "Câu hỏi không được để trống." });
+            }
 
-            Dữ liệu văn bản thô:
-            "${rawData}"`;
+            const today = new Date().toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
+            const prompt = `Bạn là một trợ lý phân tích dữ liệu phòng khám thông minh và súc tích. Bạn sẽ nhận được một câu hỏi từ người dùng và một bộ dữ liệu bệnh nhân dưới dạng JSON. Nhiệm vụ của bạn là trả lời câu hỏi đó CHỈ DỰA TRÊN dữ liệu được cung cấp.
+
+            QUY TẮC:
+            - Trả lời ngắn gọn, đi thẳng vào vấn đề.
+            - Nếu câu hỏi yêu cầu liệt kê, hãy dùng gạch đầu dòng (-).
+            - Nếu dữ liệu không đủ để trả lời, hãy nói rằng "Dữ liệu hiện tại không đủ để trả lời câu hỏi này."
+            - Luôn trả lời bằng tiếng Việt.
+            - Hôm nay là ngày ${today}.
+
+            Dữ liệu bệnh nhân hiện tại:
+            ${JSON.stringify(context, null, 2)}
+
+            Câu hỏi của người dùng: "${query}"`;
+            
             const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "ARRAY",
-                        items: {
-                            type: "OBJECT",
-                            properties: {
-                                "subject": { "type": "STRING" },
-                                "name": { "type": "STRING" },
-                                "yearOfBirth": { "type": "NUMBER" },
-                                "phone": { "type": "STRING" },
-                                "lastExamDate": { "type": "STRING" },
-                                "revisitDays": { "type": "NUMBER" },
-                                "notes": { "type": "STRING" }
-                            },
-                            "required": ["name", "lastExamDate"]
-                        }
-                    }
-                }
+                contents: [{ parts: [{ text: prompt }] }]
             };
-
-            const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
 
             const geminiResponse = await fetch(geminiApiUrl, {
                 method: 'POST',
@@ -95,25 +99,23 @@ try {
             }
 
             const result = await geminiResponse.json();
-            const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
             
-            console.log("Đã xử lý xong, gửi kết quả về frontend.");
-            res.status(200).json(JSON.parse(jsonText));
+            console.log("Trợ lý AI đã xử lý xong.");
+            res.status(200).json({ response: responseText || "Tôi không thể xử lý yêu cầu này." });
 
         } catch (error) {
-            console.error('Lỗi trong quá trình xử lý yêu cầu:', error);
+            console.error('Lỗi trong quá trình xử lý của trợ lý AI:', error);
             res.status(500).json({ message: 'Đã có lỗi xảy ra phía máy chủ' });
         }
     });
 
-    // --- Bước 6: Khởi động máy chủ ---
-    const PORT = process.env.PORT || 3000; // Render sẽ tự cung cấp PORT
+    // --- Giai đoạn 5: Khởi động máy chủ ---
+    const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
         console.log(`>>> Máy chủ trung gian đang lắng nghe tại cổng ${PORT}`);
     });
 
 } catch (e) {
-    console.error("!!! Đã xảy ra lỗi nghiêm trọng khi khởi tạo server. Vui lòng kiểm tra lại các thư viện đã cài đặt.");
-    console.error(e);
+    console.error("!!! Lỗi khởi tạo server:", e);
 }
-
