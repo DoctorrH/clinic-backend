@@ -1,10 +1,11 @@
-// --- File: server.js (Phiên bản nâng cấp, thêm Trợ lý AI) ---
+// --- File: server.js (Phiên bản nâng cấp, thêm Trợ lý AI và phục vụ giao diện) ---
 
 // --- Giai đoạn 1: Nạp các "phụ tùng" ---
 console.log("Bắt đầu khởi tạo server...");
 
 try {
     const express = require('express');
+    const path = require('path'); // Thêm 'path' để làm việc với đường dẫn tệp
     const fetch = require('node-fetch');
     const cors = require('cors'); 
     require('dotenv').config(); 
@@ -15,6 +16,10 @@ try {
     const app = express();
     app.use(cors()); 
     app.use(express.json({ limit: '5mb' })); // Tăng giới hạn payload để chứa dữ liệu bệnh nhân
+
+    // --- MỚI: Phục vụ các tệp tĩnh (HTML, CSS, JS) từ thư mục 'public' ---
+    app.use(express.static(path.join(__dirname, 'public')));
+
 
     // --- Giai đoạn 3: Lấy API Key ---
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -29,7 +34,7 @@ try {
 
     // --- Giai đoạn 4: Tạo các "cánh cửa" API ---
 
-    // CÁNH CỬA 1: Dành cho việc nhập liệu (Không thay đổi)
+    // CÁNH CỬA 1: Dành cho việc nhập liệu
     app.post('/api/import-patients', async (req, res) => {
         console.log("Đã nhận được yêu cầu tại /api/import-patients...");
         try {
@@ -37,9 +42,34 @@ try {
             if (!rawData) {
                 return res.status(400).json({ message: "Dữ liệu đầu vào không được để trống." });
             }
-            const prompt = `Bạn là trợ lý phân tích dữ liệu y tế... (Prompt không thay đổi)`; // Giữ nguyên prompt cũ
-            const payload = { /* ... payload không thay đổi ... */ };
-            // ... (Logic xử lý không thay đổi) ...
+            const prompt = `Bạn là một trợ lý phân tích dữ liệu thông minh cho một ứng dụng y tế. Nhiệm vụ của bạn là chuyển đổi dữ liệu văn bản thô, có thể được sao chép từ một bảng tính hoặc nhập thủ công, thành một mảng JSON có cấu trúc gồm các đối tượng bệnh nhân.
+            QUY TẮC PHÂN TÍCH CÚ PHÁP:
+            - Mỗi dòng trong đầu vào thường đại diện cho một bệnh nhân.
+            - Dữ liệu có thể không theo thứ tự cố định, nhưng hãy cố gắng xác định các trường sau: Name (Tên), Year of Birth (Năm sinh), Phone (SĐT), Last Exam Date (Ngày khám), Revisit Days (Số ngày hẹn), Notes (Ghi chú), Subject (Đối tượng).
+            - **QUAN TRỌNG:** Chỉ điền trường 'subject' nếu có một chuỗi văn bản (thường là mã như THAA, DTDB) đứng **trước** tên bệnh nhân. Nếu không có gì trước tên, hãy để 'subject' là null hoặc chuỗi rỗng.
+            - **QUAN TRỌNG:** Chỉ điền trường 'yearOfBirth' nếu có một số có 4 chữ số nằm **giữa** tên bệnh nhân và ngày khám. Nếu không, hãy để 'yearOfBirth' là null.
+            - Tên và Ngày khám là các trường bắt buộc phải có.
+            - Diễn giải các khoảng thời gian: '2 tuần' -> 14, '1 tháng' -> 30.
+            - Đầu ra PHẢI là một mảng JSON hợp lệ.
+            Dữ liệu văn bản thô:
+            "${rawData}"`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                "subject": { "type": "STRING" }, "name": { "type": "STRING" }, "yearOfBirth": { "type": "NUMBER" }, "phone": { "type": "STRING" }, "lastExamDate": { "type": "STRING" }, "revisitDays": { "type": "NUMBER" }, "notes": { "type": "STRING" }
+                            },
+                            "required": ["name", "lastExamDate"]
+                        }
+                    }
+                }
+            };
             
             const geminiResponse = await fetch(geminiApiUrl, {
                 method: 'POST',
@@ -57,11 +87,11 @@ try {
         }
     });
 
-    // --- CÁNH CỬA 2 (MỚI): Dành cho Trợ lý AI ---
+    // CÁNH CỬA 2: Dành cho Trợ lý AI
     app.post('/api/assistant', async (req, res) => {
         console.log("Đã nhận được yêu cầu tại /api/assistant...");
         try {
-            const { query, context } = req.body; // Nhận câu hỏi và dữ liệu bệnh nhân
+            const { query, context } = req.body;
             if (!query) {
                 return res.status(400).json({ message: "Câu hỏi không được để trống." });
             }
