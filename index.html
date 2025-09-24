@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
+        /* CSS không thay đổi */
          body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
@@ -411,6 +412,7 @@
             align-items: center;
             flex-wrap: wrap;
         }
+        /* Calendar CSS */
         #calendarHeader button {
             background-color: #e5e7eb;
             border-radius: 50%;
@@ -464,6 +466,8 @@
         .count-THAB { background-color: #f97316; } /* orange */
         .count-DTDA { background-color: #22c55e; } /* green */
         .count-DTDB { background-color: #3b82f6; } /* blue */
+
+        /* --- MỚI: CSS cho Trợ lý AI --- */
         #aiChatHistory .chat-bubble {
             padding: 8px 12px;
             border-radius: 12px;
@@ -486,7 +490,7 @@
     </style>
 </head>
 <body>
-    <!-- Màn hình đăng nhập -->
+    <!-- Màn hình đăng nhập (không thay đổi) -->
     <div class="fullscreen-center" id="authScreen">
         <div class="center-card">
             <svg class="login-logo text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -504,7 +508,7 @@
         </div>
     </div>
 
-    <!-- Màn hình chọn phòng khám -->
+    <!-- Màn hình chọn phòng khám (không thay đổi) -->
     <div class="fullscreen-center" id="clinicSelectionScreen" style="display: none;">
         <div class="center-card">
             <div class="flex justify-between items-center">
@@ -529,7 +533,7 @@
         </div>
     </div>
     
-    <!-- Màn hình ứng dụng chính -->
+    <!-- Màn hình ứng dụng chính (không thay đổi) -->
     <div id="mainApp" style="display: none;">
          <div class="loading-overlay" id="loadingOverlay">
             <div class="spinner"></div>
@@ -564,6 +568,7 @@
                             <option value="Đã khám">Đã Khám</option>
                         </select>
                         <button onclick="showAddPatientModal()" class="btn btn-primary w-full sm:w-auto">Thêm Bệnh Nhân Mới</button>
+                        <button onclick="showAiImportModal()" class="btn btn-primary w-full sm:w-auto">📄 Nhập Dữ liệu AI</button>
                     </div>
                     <div class="table-container" id="tableContainer">
                         <table class="w-full" id="patientTable">
@@ -589,7 +594,7 @@
         </div>
     </div>
     
-    <!-- Các modal -->
+    <!-- Các modal (không thay đổi) -->
     <div id="addPatientModal" class="modal">
         <div class="modal-content">
             <h3 class="text-xl font-bold mb-4">Thêm Bệnh Nhân Mới</h3>
@@ -665,7 +670,7 @@
     <div id="messageModal" class="modal">
         <div class="modal-message">
             <p id="messageText"></p>
-            <button onclick="hideMessage()" class="btn btn-primary mt-4">Đóng</button>
+            <button onclick="window.hideMessage()" class="btn btn-primary mt-4">Đóng</button>
         </div>
     </div>
 
@@ -679,42 +684,41 @@
             </div>
         </div>
     </div>
-
-    <div id="aiUpdateConfirmModal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-lg font-bold mb-2">Xác Nhận Cập Nhật từ AI</h3>
-            <p class="text-sm text-gray-600 mb-4">Trợ lý AI đề xuất các thay đổi sau cho bệnh nhân <strong id="aiUpdatePatientName"></strong>. Bạn có đồng ý không?</p>
-            <div id="aiUpdateChanges" class="bg-gray-50 p-3 rounded-lg border mb-4 text-sm"></div>
-            <div class="flex flex-col sm:flex-row justify-end gap-4 mt-4">
-                <button id="cancelAiUpdateBtn" class="btn btn-secondary w-full sm:w-auto">Hủy</button>
-                <button id="confirmAiUpdateBtn" class="btn btn-primary w-full sm:w-auto">Đồng ý</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="aiCreateConfirmModal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-lg font-bold mb-2">Xác Nhận Tạo Mới từ AI</h3>
-            <p class="text-sm text-gray-600 mb-4">Trợ lý AI đề xuất tạo bệnh nhân mới với các thông tin sau. Bạn có đồng ý không?</p>
-            <div id="aiCreateDetails" class="bg-gray-50 p-3 rounded-lg border mb-4 text-sm"></div>
-            <div class="flex flex-col sm:flex-row justify-end gap-4 mt-4">
-                <button id="cancelAiCreateBtn" class="btn btn-secondary w-full sm:w-auto">Hủy</button>
-                <button id="confirmAiCreateBtn" class="btn btn-primary w-full sm:w-auto">Đồng ý</button>
-            </div>
-        </div>
-    </div>
     
     <div id="dailyAppointmentModal" class="modal">
         <div class="modal-content" style="max-width: 600px;">
             <h3 class="text-xl font-bold mb-4">Bệnh nhân hẹn ngày <span id="selectedDate"></span></h3>
             <div id="dailyAppointmentList" class="max-h-96 overflow-y-auto"></div>
             <div class="flex justify-end mt-4">
-                <button onclick="hideModal('dailyAppointmentModal')" class="btn btn-secondary">Đóng</button>
+                <button onclick="window.hideModal('dailyAppointmentModal')" class="btn btn-secondary">Đóng</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="aiImportModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">📄 Nhập Dữ liệu bằng AI</h3>
+            <p class="text-sm text-gray-600 mb-4">Tải lên tệp Excel hoặc dán dữ liệu vào ô bên dưới. AI sẽ tự động hiểu và phân tích.</p>
+            <div class="modal-input-group">
+                <label for="excelUpload" class="block text-sm font-medium text-gray-900">1. Tải lên tệp Excel (tùy chọn):</label>
+                <input type="file" id="excelUpload" accept=".xlsx, .xls" class="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer focus:outline-none">
+            </div>
+            <div class="relative py-2">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
+                <div class="relative flex justify-center"><span class="bg-white px-2 text-sm text-gray-500">HOẶC</span></div>
+            </div>
+            <div class="modal-input-group">
+                <label for="aiImportData" class="block text-sm font-medium text-gray-900">2. Dán dữ liệu và kiểm tra:</label>
+                <textarea id="aiImportData" rows="8" class="w-full border p-2 rounded font-mono text-sm" placeholder="Ví dụ:&#10;THAA Nguyễn Văn An, 1980, 22/09/2025, 14, huyết áp ổn&#10;Trần Thị Bình, 20/09/2025, 30 ngày (không có năm sinh)&#10;DTDB Lê Văn Cường, 1975, 21/09/2025, 1 tháng"></textarea>
+            </div>
+            <div class="flex flex-col sm:flex-row justify-end gap-2 mt-6">
+                <button onclick="window.hideModal('aiImportModal')" class="btn btn-secondary w-full sm:w-auto">Hủy</button>
+                <button id="handleAiImportBtn" class="btn btn-primary w-full sm:w-auto">Bắt đầu Nhập</button>
             </div>
         </div>
     </div>
 
-    <!-- Nút và Modal cho Trợ lý AI -->
+    <!-- --- MỚI: Nút và Modal cho Trợ lý AI --- -->
     <button id="aiFab" class="fixed bottom-6 right-6 bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-transform transform hover:scale-110 z-50" style="display: none;">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -724,14 +728,16 @@
         <div class="modal-content" style="max-width: 600px; height: 70vh; display: flex; flex-direction: column;">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold">Trợ lý AI</h3>
-                <button onclick="hideAiChat()" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+                <button onclick="window.hideAiChat()" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
             </div>
-            <div id="aiChatHistory" class="flex-grow bg-gray-50 p-3 rounded-lg overflow-y-auto mb-4 border"></div>
+            <div id="aiChatHistory" class="flex-grow bg-gray-50 p-3 rounded-lg overflow-y-auto mb-4 border">
+                <!-- Tin nhắn trò chuyện sẽ được thêm vào đây -->
+            </div>
             <div id="aiThinkingIndicator" class="text-center mb-2" style="display: none;">
                 <p class="text-sm text-gray-500 italic">Trợ lý AI đang suy nghĩ...</p>
             </div>
             <div class="flex gap-2">
-                <input type="text" id="aiChatInput" class="w-full border p-2 rounded-lg" placeholder="Hỏi hoặc yêu cầu AI cập nhật...">
+                <input type="text" id="aiChatInput" class="w-full border p-2 rounded-lg" placeholder="Hỏi AI điều gì đó...">
                 <button id="aiChatSendBtn" class="btn btn-primary">Gửi</button>
             </div>
         </div>
@@ -739,16 +745,16 @@
 
 
     <script type="module">
-        // Firebase imports
+        // Firebase imports (không thay đổi)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
             getAuth, 
             onAuthStateChanged, 
             signInWithEmailAndPassword
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, addDoc, getDocs, deleteDoc, writeBatch, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, addDoc, getDocs, deleteDoc, writeBatch, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Constants
+        // Constants (không thay đổi)
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4hxPceQc1bIeKpi5k797BqT7jE5Xg_pDF5AS77PysziKOhzcQvqUPymcdXpbKBIYs/exec';
         const firebaseConfig = {
           apiKey: "AIzaSyAcdeeZ4XNwL8--GhYQk_2ahEYz_44kM-E",
@@ -759,7 +765,7 @@
           appId: "1:464241884269:web:cb240275d07eda813d1364"
         };
         
-        // App state variables
+        // Biến trạng thái ứng dụng
         let db, auth;
         let allPatients = [], filteredPatients = [], allClinicData = {}, appointmentCounts = {};
         let currentClinicId = null;
@@ -769,21 +775,66 @@
         let activePatientIndex = -1;
         let activePatientDocId = null;
         let currentEditableCell = null;
-        let aiChatHistory = []; 
+        let aiChatHistory = []; // --- MỚI: Biến lưu trữ lịch sử trò chuyện AI
 
-        // UI element variables
+        // Biến UI
         let loadingOverlay, authScreen, clinicSelectionScreen, mainApp;
         let emailInput, passwordInput, authButton, authErrorMessage;
         let clinicList, clinicNameElement, patientTableBody, searchBox, statusFilter;
-        let messageModal, messageText;
+        let handleAiImportBtn, excelUploadInput, messageModal, messageText;
         let tableContainer, fixedScrollContainer, fixedScroll;
-        let confirmDeleteBtn, cancelDeleteBtn, confirmAiUpdateBtn, cancelAiUpdateBtn, confirmAiCreateBtn, cancelAiCreateBtn;
-        let aiFab, aiChatModal, aiChatHistoryEl, aiChatInput, aiChatSendBtn, aiThinkingIndicator;
+        let confirmDeleteBtn, cancelDeleteBtn;
+        let aiFab, aiChatModal, aiChatHistoryEl, aiChatInput, aiChatSendBtn, aiThinkingIndicator; // --- MỚI: Biến UI cho AI
 
-        // --- Core Functions ---
+        // Hàm helper cho đường dẫn Firestore (không thay đổi)
+        function getPatientsCollectionRef(clinicId) {
+            const appId = firebaseConfig.projectId;
+            return collection(db, 'artifacts', appId, 'public', 'data', 'clinics', clinicId, 'patients');
+        }
 
-        window.onload = function initialize() {
-            // Assign UI elements
+        function getPatientDocRef(clinicId, docId) {
+            const appId = firebaseConfig.projectId;
+            return doc(db, 'artifacts', appId, 'public', 'data', 'clinics', clinicId, 'patients', docId);
+        }
+
+        // Logic xác thực (không thay đổi)
+        async function handleLogin() {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            authErrorMessage.textContent = '';
+            showLoading();
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                console.error("Authentication error:", error);
+                authErrorMessage.textContent = getFriendlyAuthError(error.code);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function getFriendlyAuthError(errorCode) {
+            switch (errorCode) {
+                case 'auth/invalid-email':
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    return 'Tài khoản hoặc mật khẩu không chính xác.';
+                default:
+                    return 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+            }
+        }
+        
+        window.goBackToClinicSelection = function() {
+             mainApp.style.display = 'none';
+             clinicSelectionScreen.style.display = 'flex';
+             document.body.classList.remove('app-background');
+             if(aiFab) aiFab.style.display = 'block'; // --- CẬP NHẬT: Hiển thị nút AI khi quay lại
+        }
+
+        function initialize() {
+            // Gán các phần tử UI hiện có
             loadingOverlay = document.getElementById('loadingOverlay');
             authScreen = document.getElementById('authScreen');
             clinicSelectionScreen = document.getElementById('clinicSelectionScreen');
@@ -797,6 +848,8 @@
             patientTableBody = document.getElementById('patientTableBody');
             searchBox = document.getElementById('searchBox');
             statusFilter = document.getElementById('statusFilter');
+            handleAiImportBtn = document.getElementById('handleAiImportBtn');
+            excelUploadInput = document.getElementById('excelUpload');
             messageModal = document.getElementById('messageModal');
             messageText = document.getElementById('messageText');
             tableContainer = document.getElementById('tableContainer');
@@ -804,10 +857,8 @@
             fixedScroll = document.getElementById('fixedScroll');
             confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
             cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-            confirmAiUpdateBtn = document.getElementById('confirmAiUpdateBtn');
-            cancelAiUpdateBtn = document.getElementById('cancelAiUpdateBtn');
-            confirmAiCreateBtn = document.getElementById('confirmAiCreateBtn');
-            cancelAiCreateBtn = document.getElementById('cancelAiCreateBtn');
+
+            // --- MỚI: Gán các phần tử UI của AI
             aiFab = document.getElementById('aiFab');
             aiChatModal = document.getElementById('aiChatModal');
             aiChatHistoryEl = document.getElementById('aiChatHistory');
@@ -815,38 +866,40 @@
             aiChatSendBtn = document.getElementById('aiChatSendBtn');
             aiThinkingIndicator = document.getElementById('aiThinkingIndicator');
 
-            // Initialize Firebase
+            // Khởi tạo Firebase
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
             
-            // Auth state listener
+            // Lắng nghe thay đổi trạng thái xác thực
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     authScreen.style.display = 'none';
                     mainApp.style.display = 'none';
                     clinicSelectionScreen.style.display = 'flex';
-                    if(aiFab) aiFab.style.display = 'block'; 
+                    aiFab.style.display = 'block'; // --- CẬP NHẬT: Hiển thị nút AI khi đã đăng nhập
                     document.getElementById('userEmail').textContent = user.email;
                     renderClinicSelection();
                 } else {
                     authScreen.style.display = 'flex';
                     clinicSelectionScreen.style.display = 'none';
                     mainApp.style.display = 'none';
-                    if(aiFab) aiFab.style.display = 'none'; 
+                    aiFab.style.display = 'none'; // --- CẬP NHẬT: Ẩn nút AI khi chưa đăng nhập
                     document.body.classList.remove('app-background');
                 }
             });
 
-            // Attach event listeners
+            // Gán các sự kiện
             authButton.addEventListener('click', handleLogin);
-            passwordInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') handleLogin(); });
+            passwordInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') handleLogin();
+            });
             searchBox.addEventListener('input', filterAndSearch);
             statusFilter.addEventListener('change', filterAndSearch);
+            handleAiImportBtn.addEventListener('click', handleAiImport);
+            excelUploadInput.addEventListener('change', handleExcelUpload);
             confirmDeleteBtn.onclick = () => { deletePatient(); hideModal('deleteConfirmModal'); };
-            cancelDeleteBtn.onclick = () => hideModal('deleteConfirmModal');
-            cancelAiUpdateBtn.onclick = () => hideModal('aiUpdateConfirmModal');
-            cancelAiCreateBtn.onclick = () => hideModal('aiCreateConfirmModal');
+            cancelDeleteBtn.onclick = () => { hideModal('deleteConfirmModal'); };
             
             window.addEventListener('resize', updateFixedScrollbar);
             tableContainer.addEventListener('scroll', (e) => { fixedScroll.scrollLeft = e.target.scrollLeft; });
@@ -865,83 +918,22 @@
                 });
             });
              
-            aiFab.addEventListener('click', showAiChat);
+            // --- MỚI: Gán sự kiện cho AI Chat
+            aiFab.addEventListener('click', window.showAiChat);
             aiChatSendBtn.addEventListener('click', handleAiChatRequest);
-            aiChatInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') handleAiChatRequest(); });
+            aiChatInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') handleAiChatRequest();
+            });
         }
 
-        // --- Firebase & Backend Functions ---
+        window.onload = initialize;
 
-        function getPatientsCollectionRef(clinicId) {
-            const appId = firebaseConfig.projectId;
-            return collection(db, 'artifacts', appId, 'public', 'data', 'clinics', clinicId, 'patients');
-        }
-
-        function getPatientDocRef(clinicId, docId) {
-            const appId = firebaseConfig.projectId;
-            return doc(db, 'artifacts', appId, 'public', 'data', 'clinics', clinicId, 'patients', docId);
-        }
-
-        async function handleLogin() {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            authErrorMessage.textContent = '';
-            showLoading();
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                console.error("Authentication error:", error);
-                authErrorMessage.textContent = getFriendlyAuthError(error.code);
-            } finally {
-                hideLoading();
-            }
-        }
-        
-        async function updatePatient(docId, updateData) {
-            if (!docId) throw new Error("Invalid document ID for update.");
-            const patientDocRef = getPatientDocRef(currentClinicId, docId);
-            await setDoc(patientDocRef, updateData, { merge: true });
-        }
-
-        async function callBackend(endpoint, body) {
-            try {
-                const apiUrl = new URL(endpoint, window.location.origin);
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                
-                // Đọc phản hồi dưới dạng văn bản thô trước
-                const responseText = await response.text();
-
-                if (!response.ok) {
-                    // Nếu có lỗi, cố gắng phân tích văn bản lỗi, nếu không thì ném lỗi chung
-                    let errorData = { message: `Lỗi máy chủ: ${response.statusText}` };
-                    try {
-                        errorData = JSON.parse(responseText);
-                    } catch (e) {
-                         errorData.message = responseText || errorData.message;
-                    }
-                    throw new Error(errorData.message);
-                }
-                
-                // Chỉ phân tích JSON nếu có nội dung, nếu không trả về một đối tượng trống
-                return responseText ? JSON.parse(responseText) : {};
-            } catch (error) {
-                console.error(`Lỗi khi gọi ${endpoint}:`, error);
-                window.showMessage(`Lỗi kết nối tới máy chủ: ${error.message}`);
-                throw error;
-            }
-        }
-
-        // --- AI Assistant Functions ---
-
+        // --- MỚI: Các hàm cho Trợ lý AI ---
         window.showAiChat = function() {
             if (aiChatHistory.length === 0) {
                 aiChatHistory.push({
                     role: 'model',
-                    text: 'Xin chào! Tôi có thể giúp gì cho bạn? Bạn có thể yêu cầu: "Thêm BN A, 1990, sdt 0123..." hoặc "Tóm tắt ghi chú của BN B".'
+                    text: 'Xin chào! Tôi có thể giúp gì cho bạn? Bạn có thể hỏi tôi những câu như: "Có bao nhiêu bệnh nhân quá hẹn ở phòng khám THAA?" hoặc "Tóm tắt ghi chú của bệnh nhân Nguyễn Văn An."'
                 });
             }
             renderAiChat();
@@ -958,8 +950,10 @@
             aiChatHistory.forEach(message => {
                 const bubble = document.createElement('div');
                 bubble.classList.add('chat-bubble');
+                // Chuyển đổi markdown cơ bản (in đậm) thành HTML
                 let formattedText = message.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 bubble.innerHTML = formattedText;
+
                 if (message.role === 'user') {
                     bubble.classList.add('user-bubble');
                 } else {
@@ -973,116 +967,299 @@
         async function handleAiChatRequest() {
             const userQuery = aiChatInput.value.trim();
             if (!userQuery) return;
+
             aiChatHistory.push({ role: 'user', text: userQuery });
             renderAiChat();
             aiChatInput.value = '';
             aiThinkingIndicator.style.display = 'block';
-            let contextData = currentClinicId ? allPatients : allClinicData;
+
+            let contextData;
+            let contextDescription;
+            if (currentClinicId) {
+                contextData = allPatients;
+                contextDescription = `dữ liệu cho phòng khám '${clinicNameElement.textContent}'`;
+            } else {
+                contextData = allClinicData;
+                contextDescription = "dữ liệu từ tất cả các phòng khám";
+            }
+            
             try {
-                const result = await callBackend('/api/assistant', { query: userQuery, context: contextData });
-                if (result.response) {
-                    aiChatHistory.push({ role: 'model', text: result.response });
-                }
-                if (result.action === 'update' && result.patientId && result.updates) {
-                    const patientToUpdate = allPatients.find(p => p.id === result.patientId);
-                    if (patientToUpdate) {
-                        showUpdateConfirmModal(patientToUpdate, result.updates);
-                    } else {
-                        aiChatHistory.push({ role: 'model', text: `Rất tiếc, tôi không tìm thấy bệnh nhân với ID ${result.patientId} để cập nhật.` });
-                    }
-                } else if (result.action === 'create' && result.updates) {
-                     showCreateConfirmModal(result.updates);
-                }
+                const aiResponse = await callGeminiForChat(contextData, contextDescription, userQuery);
+                aiChatHistory.push({ role: 'model', text: aiResponse });
             } catch (error) {
-                aiChatHistory.push({ role: 'model', text: `Xin lỗi, đã có lỗi xảy ra: ${error.message}` });
+                console.error("Error in AI Chat:", error);
+                aiChatHistory.push({ role: 'model', text: "Xin lỗi, tôi đã gặp lỗi khi xử lý yêu cầu của bạn." });
             } finally {
                 aiThinkingIndicator.style.display = 'none';
                 renderAiChat();
             }
         }
-        
-        function showUpdateConfirmModal(patient, updates) {
-            document.getElementById('aiUpdatePatientName').textContent = patient.name;
-            const changesDiv = document.getElementById('aiUpdateChanges');
-            changesDiv.innerHTML = '';
-            const fieldNames = { subject: 'Đối tượng', name: 'Tên', yearOfBirth: 'Năm sinh', phone: 'SĐT', lastExamDate: 'Ngày khám', nextExamDate: 'Ngày hẹn', revisitDays: 'Số ngày hẹn', notes: 'Ghi chú' };
-            for (const key in updates) {
-                const oldValue = patient[key] || '(trống)';
-                const newValue = updates[key];
-                changesDiv.innerHTML += `<div><strong>${fieldNames[key] || key}:</strong> <span class="text-red-600 line-through">${formatValue(key, oldValue)}</span> → <span class="text-green-600">${formatValue(key, newValue)}</span></div>`;
-            }
-            confirmAiUpdateBtn.onclick = () => {
-                hideModal('aiUpdateConfirmModal');
-                performAiUpdate(patient.id, updates);
+
+        async function callGeminiForChat(contextData, contextDescription, userQuery) {
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            const dataString = JSON.stringify(contextData);
+            const today = new Date().toLocaleDateString('vi-VN');
+
+            const prompt = `Bạn là một trợ lý AI thông minh và hữu ích cho một ứng dụng quản lý phòng khám. Nhiệm vụ của bạn là trả lời các câu hỏi của người dùng dựa trên dữ liệu được cung cấp.
+
+            **Bối cảnh:**
+            - Hôm nay là ngày: ${today}.
+            - Bạn đang truy cập ${contextDescription}.
+
+            **Dữ liệu (định dạng JSON):**
+            ${dataString}
+
+            **Hướng dẫn:**
+            1.  Chỉ trả lời dựa trên dữ liệu được cung cấp. KHÔNG bịa đặt thông tin.
+            2.  Nếu dữ liệu không đủ để trả lời, hãy nói rõ điều đó.
+            3.  Hãy trả lời một cách ngắn gọn, rõ ràng và chuyên nghiệp.
+            4.  Sử dụng tiếng Việt.
+
+            **Yêu cầu của người dùng:**
+            "${userQuery}"`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
             };
-            showModal('aiUpdateConfirmModal');
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
+            }
+
+            const result = await response.json();
+            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (text) {
+                return text;
+            } else {
+                console.error("Invalid response structure from Gemini Chat:", result);
+                throw new Error("Không nhận được phản hồi hợp lệ từ AI.");
+            }
         }
 
-        function showCreateConfirmModal(newData) {
-            const detailsDiv = document.getElementById('aiCreateDetails');
-            detailsDiv.innerHTML = '';
-            const fieldNames = { subject: 'Đối tượng', name: 'Tên', yearOfBirth: 'Năm sinh', phone: 'SĐT', lastExamDate: 'Ngày khám', nextExamDate: 'Ngày hẹn', revisitDays: 'Số ngày hẹn', notes: 'Ghi chú' };
-            for (const key in newData) {
-                 if (newData[key] !== null && newData[key] !== undefined) {
-                    detailsDiv.innerHTML += `<div><strong>${fieldNames[key] || key}:</strong> <span class="text-blue-600">${formatValue(key, newData[key])}</span></div>`;
-                }
-            }
-            confirmAiCreateBtn.onclick = () => {
-                hideModal('aiCreateConfirmModal');
-                performAiCreate(newData);
-            };
-            showModal('aiCreateConfirmModal');
-        }
-
-        async function performAiUpdate(patientId, updates) {
+        // Các hàm hiện có (không thay đổi)
+        async function callGeminiForPatientJsonArray(rawData) {
             showLoading();
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const prompt = `Bạn là một trợ lý phân tích dữ liệu thông minh cho một ứng dụng y tế. Nhiệm vụ của bạn là chuyển đổi dữ liệu văn bản thô, có thể được sao chép từ một bảng tính hoặc nhập thủ công, thành một mảng JSON có cấu trúc gồm các đối tượng bệnh nhân.
+            QUY TẮC PHÂN TÍCH CÚ PHÁP:
+            - Mỗi dòng trong đầu vào thường đại diện cho một bệnh nhân.
+            - Dữ liệu có thể không theo thứ tự cố định, nhưng hãy cố gắng xác định các trường sau: Name (Tên), Year of Birth (Năm sinh), Phone (SĐT), Last Exam Date (Ngày khám), Revisit Days (Số ngày hẹn), Notes (Ghi chú), Subject (Đối tượng).
+            - **QUAN TRỌNG:** Chỉ điền trường 'subject' nếu có một chuỗi văn bản (thường là mã như THAA, DTDB) đứng **trước** tên bệnh nhân. Nếu không có gì trước tên, hãy để 'subject' là null hoặc chuỗi rỗng.
+            - **QUAN TRỌNG:** Chỉ điền trường 'yearOfBirth' nếu có một số có 4 chữ số nằm **giữa** tên bệnh nhân và ngày khám. Nếu không, hãy để 'yearOfBirth' là null.
+            - Tên và Ngày khám là các trường bắt buộc phải có.
+            - Diễn giải các khoảng thời gian: '2 tuần' -> 14, '1 tháng' -> 30.
+            - Đầu ra PHẢI là một mảng JSON hợp lệ.
+            Dữ liệu văn bản thô:
+            "${rawData}"`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                "subject": { "type": "STRING", "description": "Mã đối tượng, chỉ được điền nếu nó xuất hiện trước tên bệnh nhân." },
+                                "name": { "type": "STRING", "description": "Họ và tên của bệnh nhân." },
+                                "yearOfBirth": { "type": "NUMBER", "description": "Năm sinh của bệnh nhân, chỉ được điền nếu nó nằm giữa tên và ngày khám." },
+                                "phone": { "type": "STRING", "description": "Số điện thoại của bệnh nhân." },
+                                "lastExamDate": { "type": "STRING", "description": "Ngày khám của bệnh nhân, định dạng dd/mm/yyyy." },
+                                "revisitDays": { "type": "NUMBER", "description": "Số ngày cho đến lần tái khám tiếp theo." },
+                                "notes": { "type": "STRING", "description": "Bất kỳ ghi chú bổ sung nào về bệnh nhân." }
+                            },
+                            "required": ["name", "lastExamDate"]
+                        }
+                    }
+                }
+            };
             try {
-                await updatePatient(patientId, updates);
-                // syncWithGoogleSheet('update', { ...updates, id: patientId });
-                window.showMessage("Đã cập nhật thông tin bệnh nhân thành công!");
-                aiChatHistory.push({ role: 'model', text: '✅ Cập nhật đã được thực hiện.' });
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
+                }
+                const result = await response.json();
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (jsonText) { return JSON.parse(jsonText); } 
+                else {
+                    console.error("Invalid JSON response from Gemini:", result);
+                    window.showMessage("AI could not parse the data. Please check the format.");
+                    return null;
+                }
             } catch (error) {
-                console.error("Lỗi khi cập nhật theo yêu cầu AI:", error);
-                window.showMessage(`Đã xảy ra lỗi: ${error.message}`);
-                aiChatHistory.push({ role: 'model', text: `❌ Rất tiếc, đã có lỗi khi thực hiện cập nhật.` });
+                console.error("Error calling Gemini API for JSON array:", error);
+                window.showMessage("Error connecting to the AI service. Please try again.");
+                return null;
             } finally {
                 hideLoading();
-                renderAiChat();
             }
         }
-
-        async function performAiCreate(newData) {
+        window.showAiImportModal = function() {
+            document.getElementById('aiImportData').value = '';
+            document.getElementById('excelUpload').value = '';
+            showModal('aiImportModal');
+        }
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
             showLoading();
-             if (!newData.name) {
-                window.showMessage("Tên bệnh nhân không được để trống.");
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const textData = XLSX.utils.sheet_to_csv(worksheet, { skipHeader: 1 });
+                    document.getElementById('aiImportData').value = textData;
+                    window.showMessage('Successfully read Excel file! Please review the data and click "Start Import".');
+                } catch (error) {
+                    console.error("Error reading Excel file:", error);
+                    window.showMessage("An error occurred while reading the Excel file. Please ensure it is a valid format.");
+                } finally {
+                    hideLoading();
+                    event.target.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        async function handleAiImport() {
+            const rawData = document.getElementById('aiImportData').value;
+            if (!rawData.trim()) {
+                window.showMessage("Please upload an Excel file or paste patient data.");
+                return;
+            }
+            const parsedPatients = await callGeminiForPatientJsonArray(rawData);
+            if (!parsedPatients || !Array.isArray(parsedPatients) || parsedPatients.length === 0) { return; }
+            showLoading();
+            try {
+                const patientsCollectionRef = getPatientsCollectionRef(currentClinicId);
+                const batch = writeBatch(db);
+                parsedPatients.forEach(patient => {
+                    if (!patient.name || !patient.lastExamDate) {
+                        console.warn(`Skipping patient '${patient.name || 'No Name'}' due to missing name or exam date.`);
+                        return; 
+                    }
+                    const parsedLastExamDate = parseDate(patient.lastExamDate);
+                    if (!parsedLastExamDate) {
+                        console.warn(`Skipping patient '${patient.name}' due to invalid exam date: ${patient.lastExamDate}`);
+                        return;
+                    }
+                    let nextExamDate = null;
+                    const revisitDays = patient.revisitDays ? Number(patient.revisitDays) : null;
+                    if (revisitDays !== null && !isNaN(revisitDays)) {
+                        const tempDate = new Date(parsedLastExamDate);
+                        tempDate.setDate(tempDate.getDate() + revisitDays);
+                        nextExamDate = toYYYYMMDD(tempDate);
+                    }
+                    const newPatientData = {
+                        subject: patient.subject || currentClinicId,
+                        name: patient.name,
+                        yearOfBirth: patient.yearOfBirth ? Number(patient.yearOfBirth) : null,
+                        phone: patient.phone || '',
+                        lastExamDate: toYYYYMMDD(parsedLastExamDate),
+                        nextExamDate: nextExamDate,
+                        revisitDays: revisitDays,
+                        notes: patient.notes || '',
+                        status: ''
+                    };
+                    const docRef = doc(patientsCollectionRef);
+                    batch.set(docRef, newPatientData);
+                    syncWithGoogleSheet('add', { ...newPatientData, id: docRef.id });
+                });
+                await batch.commit();
+                hideModal('aiImportModal');
+                window.showMessage(`Successfully imported ${parsedPatients.length} patients!`);
+            } catch (error) {
+                console.error("Error batch writing to Firestore:", error);
+                window.showMessage("An error occurred while saving patient data.");
+            } finally {
                 hideLoading();
+            }
+        }
+        async function syncWithGoogleSheet(action, patientData) {
+            if (!currentClinicId || !APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+                console.warn("Cannot sync: Invalid clinic ID or Apps Script URL.");
                 return;
             }
             try {
-                const patientsCollectionRef = getPatientsCollectionRef(currentClinicId);
-                const docRef = await addDoc(patientsCollectionRef, newData);
-                // syncWithGoogleSheet('add', { ...newData, id: docRef.id });
-                window.showMessage("Đã thêm bệnh nhân mới thành công!");
-                aiChatHistory.push({ role: 'model', text: `✅ Đã tạo mới bệnh nhân ${newData.name}.` });
-            } catch (e) {
-                console.error("Lỗi khi tạo mới theo yêu cầu AI:", e);
-                window.showMessage("Đã xảy ra lỗi khi thêm bệnh nhân. Vui lòng thử lại.");
-                aiChatHistory.push({ role: 'model', text: `❌ Rất tiếc, đã có lỗi khi tạo mới bệnh nhân.` });
-            } finally {
-                hideLoading();
-                renderAiChat();
+                const payload = { clinicId: currentClinicId, action: action, patientData: patientData };
+                if ('sendBeacon' in navigator) {
+                    navigator.sendBeacon(APPS_SCRIPT_URL, JSON.stringify(payload));
+                } else {
+                    await fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                }
+                console.log("Sync request sent to Apps Script.");
+            } catch (error) {
+                console.error("Error syncing with Google Sheet:", error);
             }
         }
-
-        // --- UI & Data Display Functions ---
-
-        window.goBackToClinicSelection = function() {
-             mainApp.style.display = 'none';
-             clinicSelectionScreen.style.display = 'flex';
-             document.body.classList.remove('app-background');
-             if(aiFab) aiFab.style.display = 'block'; 
+        function showLoading() { loadingOverlay.style.display = 'flex'; }
+        function hideLoading() { loadingOverlay.style.display = 'none'; }
+        window.showModal = function(modalId) { document.getElementById(modalId).style.display = 'flex'; };
+        window.hideModal = function(modalId) { document.getElementById(modalId).style.display = 'none'; };
+        window.showMessage = function(message) {
+            messageText.textContent = message;
+            window.showModal('messageModal');
         }
-
+        window.hideMessage = function() { window.hideModal('messageModal'); }
+        function getTodayLocal() {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            return now;
+        }
+        function parseDate(dateInput) {
+            if (!dateInput) return null;
+            if (typeof dateInput.toDate === 'function') {
+                const d = dateInput.toDate();
+                d.setHours(0,0,0,0);
+                return d;
+            }
+            if (dateInput instanceof Date) { return isNaN(dateInput.getTime()) ? null : dateInput; }
+            if (typeof dateInput === 'string') {
+                let parsableString = dateInput;
+                const localMatch = parsableString.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+                if (localMatch) { parsableString = `${localMatch[3]}/${localMatch[2]}/${localMatch[1]}`; } 
+                else { parsableString = parsableString.replace(/-/g, '/').split('T')[0]; }
+                const date = new Date(parsableString);
+                if (isNaN(date.getTime())) return null;
+                date.setHours(0, 0, 0, 0);
+                return date;
+            }
+            return null;
+        }
+        function formatDate(dateInput) {
+            const date = parseDate(dateInput);
+            if (!date) return ''; 
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        function toYYYYMMDD(dateInput) {
+            const date = parseDate(dateInput);
+            if (!date) return null;
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
         function setupAllClinicsListener() {
             const clinics = { "THAA": "Tăng huyết áp A", "THAB": "Tăng huyết áp B", "DTDA": "Đái tháo đường A", "DTDB": "Đái tháo đường B" };
             Object.keys(clinics).forEach(clinicId => {
@@ -1096,7 +1273,6 @@
                 });
             });
         }
-
         function aggregateAppointmentCounts() {
             appointmentCounts = {};
             const todayString = toYYYYMMDD(getTodayLocal());
@@ -1112,7 +1288,6 @@
                 });
             }
         }
-
         function renderCalendar(year, month) {
             const calendarGrid = document.getElementById('calendarGrid');
             const monthAndYear = document.getElementById('monthAndYear');
@@ -1128,7 +1303,7 @@
                 const currentDate = new Date(year, month, day);
                 const dateStr = toYYYYMMDD(currentDate);
                 const isToday = currentDate.getTime() === today.getTime();
-                let dayCell = `<div class="day-cell relative ${isToday ? 'today' : ''}" onclick="showDailyAppointments('${dateStr}')"><span class="day-number">${day}</span><div class="patient-counts">`;
+                let dayCell = `<div class="day-cell relative ${isToday ? 'today' : ''}" onclick="window.showDailyAppointments('${dateStr}')"><span class="day-number">${day}</span><div class="patient-counts">`;
                 if (appointmentCounts[dateStr]) {
                     Object.keys(appointmentCounts[dateStr]).forEach(clinicId => {
                         dayCell += `<div class="patient-count-badge count-${clinicId}">${clinicId}:${appointmentCounts[dateStr][clinicId]}</div>`;
@@ -1138,7 +1313,6 @@
                 calendarGrid.innerHTML += dayCell;
             }
         }
-
         window.showDailyAppointments = function(dateStr) {
             const selectedDateElement = document.getElementById('selectedDate');
             const appointmentListElement = document.getElementById('dailyAppointmentList');
@@ -1178,7 +1352,6 @@
             }
             showModal('dailyAppointmentModal');
         };
-
         function renderClinicSelection() {
             showLoading();
             setupAllClinicsListener();
@@ -1203,7 +1376,6 @@
             };
             hideLoading();
         }
-
         async function selectClinic(clinicId, clinicName) {
             showLoading();
             currentClinicId = clinicId;
@@ -1212,6 +1384,20 @@
             mainApp.style.display = 'block';
             document.body.classList.add('app-background');
             const patientsCollectionRef = getPatientsCollectionRef(clinicId);
+            let initialPatientSnapshot = await getDocs(patientsCollectionRef);
+            if (initialPatientSnapshot.empty) {
+                await loadInitialDataFromSheet(clinicId, patientsCollectionRef);
+                initialPatientSnapshot = await getDocs(patientsCollectionRef);
+            }
+            const batch = writeBatch(db);
+            let missingIdCount = 0;
+            initialPatientSnapshot.forEach(doc => {
+                if (!doc.data().id) {
+                    batch.update(doc.ref, { id: doc.id });
+                    missingIdCount++;
+                }
+            });
+            if (missingIdCount > 0) { await batch.commit(); }
             onSnapshot(patientsCollectionRef, (snapshot) => {
                 const todayString = toYYYYMMDD(getTodayLocal());
                 const updateBatch = writeBatch(db);
@@ -1234,7 +1420,30 @@
                 hideLoading();
             });
         }
-
+        async function loadInitialDataFromSheet(clinicId, collectionRef) {
+            if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+                window.showMessage("Apps Script URL is not configured. Data from Google Sheet will not be loaded.");
+                return;
+            }
+            window.showMessage("Loading initial data from Google Sheet...");
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?clinicId=${clinicId}`);
+                const result = await response.json();
+                if (result.status === 'success' && result.data.length > 0) {
+                    const batch = writeBatch(db);
+                    result.data.forEach(p => {
+                        const docRef = p.id ? doc(collectionRef, p.id) : doc(collectionRef);
+                        const patientData = { ...p, yearOfBirth: p.yearOfBirth ? parseInt(p.yearOfBirth, 10) : null, revisitDays: p.revisitDays ? parseInt(p.revisitDays, 10) : null };
+                        batch.set(docRef, patientData);
+                    });
+                    await batch.commit();
+                    window.showMessage("Initial data loaded successfully!");
+                } else if (result.message) { throw new Error(result.message); }
+            } catch (error) {
+                console.error("Error loading data from Google Sheet:", error);
+                window.showMessage(`Could not load data from Google Sheet: ${error.message}`);
+            }
+        }
         function filterAndSearch() {
             const searchText = searchBox.value.toLowerCase();
             const statusFilterValue = statusFilter.value;
@@ -1289,7 +1498,6 @@
             });
             renderTable();
         }
-
         function renderTable() {
             const todayString = toYYYYMMDD(getTodayLocal());
             patientTableBody.innerHTML = '';
@@ -1298,13 +1506,13 @@
                 const showUndo = patient.status === 'Đã khám' && patient.examinedOnDate === todayString;
                 const row = document.createElement('tr');
                 row.innerHTML = `<td data-label="Đối tượng">${patient.subject || ''}</td>
-                    <td data-label="Tên Bệnh Nhân"><div class="cursor-pointer font-semibold hover:underline" onclick="toggleNotes(${index})">${patient.name}</div><div class="text-sm text-gray-500">${patient.yearOfBirth || ''}</div></td>
+                    <td data-label="Tên Bệnh Nhân"><div class="cursor-pointer font-semibold hover:underline" onclick="window.toggleNotes(${index})">${patient.name}</div><div class="text-sm text-gray-500">${patient.yearOfBirth || ''}</div></td>
                     <td data-label="Ngày Khám">${formatDate(patient.lastExamDate) || ''}</td>
                     <td data-label="Ngày Hẹn Khám">${formatDate(patient.nextExamDate) || ''}</td>
                     <td data-label="Trạng Thái"><span class="status-badge ${getStatusClass(patient.status)}">${patient.status}</span></td>
-                    <td data-label="Số ngày hẹn khám" class="editable-cell" onclick="editRevisitDays(${index}, event)"><div class="cell-content">${revisitDaysValue}</div></td>
-                    <td data-label="Đánh dấu đã khám"><button onclick="${showUndo ? `undoExamined(${index})` : `markAsExamined(${index})`}" class="btn ${showUndo ? 'btn-undo' : 'btn-success'} px-4 py-2">${showUndo ? 'Hoàn Tác' : 'Đã Khám'}</button></td>
-                    <td data-label="Thao tác" class="action-buttons"><button onclick="showEditPatientModal(${index})" class="text-xs text-green-500 hover:underline">Sửa</button><button onclick="confirmDeletePatient(${index})" class="text-xs text-red-500 hover:underline">Xóa</button></td>`;
+                    <td data-label="Số ngày hẹn khám" class="editable-cell" onclick="window.editRevisitDays(${index}, event)"><div class="cell-content">${revisitDaysValue}</div></td>
+                    <td data-label="Đánh dấu đã khám"><button onclick="${showUndo ? `window.undoExamined(${index})` : `window.markAsExamined(${index})`}" class="btn ${showUndo ? 'btn-undo' : 'btn-success'} px-4 py-2">${showUndo ? 'Hoàn Tác' : 'Đã Khám'}</button></td>
+                    <td data-label="Thao tác" class="action-buttons"><button onclick="window.showEditPatientModal(${index})" class="text-xs text-green-500 hover:underline">Sửa</button><button onclick="window.confirmDeletePatient(${index})" class="text-xs text-red-500 hover:underline">Xóa</button></td>`;
                 patientTableBody.appendChild(row);
                 const notesRow = document.createElement('tr');
                 notesRow.className = 'notes-row';
@@ -1314,9 +1522,15 @@
             updateFixedScrollbar();
             updateSortIndicators();
         }
-
-        // --- Patient Action Functions ---
-
+        function updateSortIndicators() {
+            document.querySelectorAll('th .sort-indicator').forEach(span => span.textContent = '');
+            const activeHeader = document.querySelector(`th[data-sort="${currentSortColumn}"] .sort-indicator`);
+            if (activeHeader) activeHeader.textContent = sortDirection === 'asc' ? ' ▲' : ' ▼';
+        }
+        window.toggleNotes = function(index) {
+            const notesRow = patientTableBody.children[index * 2 + 1];
+            if (notesRow) notesRow.style.display = notesRow.style.display === 'table-row' ? 'none' : 'table-row';
+        }
         window.markAsExamined = async function(index) {
             showLoading();
             const patient = filteredPatients[index];
@@ -1331,36 +1545,35 @@
             const updatePayload = { lastExamDate: toYYYYMMDD(today), nextExamDate: nextExamDate, status: 'Đã khám', examinedOnDate: toYYYYMMDD(today) };
             try {
                 await updatePatient(patient.id, updatePayload);
+                syncWithGoogleSheet('update', { ...patient, ...updatePayload });
             } catch (e) {
                 console.error("Error updating document:", e);
                 window.showMessage("An error occurred while saving. Please try again.");
             } finally { hideLoading(); }
         };
-
         window.undoExamined = async function(index) {
             showLoading();
             const patient = filteredPatients[index];
             const revertedUpdate = { status: 'Hẹn Tái Khám', examinedOnDate: deleteField() };
             try {
                 await updatePatient(patient.id, revertedUpdate);
+                syncWithGoogleSheet('update', { ...patient, ...revertedUpdate });
             } catch (e) {
                 console.error("Error reverting document:", e);
                 window.showMessage("An error occurred while undoing. Please try again.");
             } finally { hideLoading(); }
         };
-
         window.editRevisitDays = function(index, event) {
             if (currentEditableCell) saveRevisitDays(currentEditableCell.parentElement.dataset.index);
             const cell = event.currentTarget;
             currentEditableCell = cell;
             const patient = filteredPatients[index];
             const currentValue = patient.revisitDays !== null && patient.revisitDays !== undefined ? patient.revisitDays : '';
-            cell.innerHTML = `<input type="number" value="${currentValue}" min="0" class="w-full h-full" id="revisitDaysInput_${index}" onblur="saveRevisitDays(${index})" onkeydown="handleKeyDown(${index}, event)">`;
+            cell.innerHTML = `<input type="number" value="${currentValue}" min="0" class="w-full h-full" id="revisitDaysInput_${index}" onblur="window.saveRevisitDays(${index})" onkeydown="window.handleKeyDown(${index}, event)">`;
             const input = document.getElementById(`revisitDaysInput_${index}`);
             input.focus();
             input.select();
         };
-
         window.handleKeyDown = function(index, event) {
             if (event.key === 'Enter') {
                 event.preventDefault(); 
@@ -1371,7 +1584,6 @@
                 currentEditableCell = null;
             }
         };
-
         window.saveRevisitDays = async function(index) {
             const cell = currentEditableCell;
             if (!cell) return;
@@ -1395,12 +1607,21 @@
             try {
                 const updatePayload = { revisitDays: newDays, nextExamDate: newNextExamDate };
                 await updatePatient(patient.id, updatePayload);
+                syncWithGoogleSheet('update', { ...patient, ...updatePayload });
             } catch (e) {
                 console.error("Error updating document:", e);
                 window.showMessage("An error occurred while saving. Please try again.");
             } finally { hideLoading(); }
         };
-
+        async function updatePatient(docId, updateData) {
+            if (!docId) throw new Error("Invalid document ID for update.");
+            const patientDocRef = getPatientDocRef(currentClinicId, docId);
+            await setDoc(patientDocRef, updateData, { merge: true });
+        }
+        function getStatusClass(status) {
+            const classes = { 'Quá hẹn': 'badge-overdue', 'Bỏ điều trị': 'badge-discontinued', 'Hẹn Tái Khám': 'badge-revisit', 'Đã khám': 'badge-examined', 'Chờ khám': 'badge-scheduled', 'Sắp tới hẹn': 'badge-upcoming' };
+            return classes[status] || 'badge-secondary';
+        }
         window.showAddPatientModal = function() {
             document.getElementById('newSubject').value = '';
             document.getElementById('newName').value = '';
@@ -1410,7 +1631,6 @@
             document.getElementById('newNotes').value = '';
             showModal('addPatientModal');
         }
-
         window.saveNewPatient = async function() {
             showLoading();
             const revisitDaysValue = document.getElementById('newRevisitDays').value;
@@ -1430,7 +1650,8 @@
             }
             try {
                 const patientsCollectionRef = getPatientsCollectionRef(currentClinicId);
-                await addDoc(patientsCollectionRef, newPatientData);
+                const docRef = await addDoc(patientsCollectionRef, newPatientData);
+                syncWithGoogleSheet('add', { ...newPatientData, id: docRef.id });
                 hideModal('addPatientModal');
                 window.showMessage("Đã thêm bệnh nhân mới thành công!");
             } catch (e) {
@@ -1438,9 +1659,7 @@
                 window.showMessage("Đã xảy ra lỗi khi thêm bệnh nhân. Vui lòng thử lại.");
             } finally { hideLoading(); }
         }
-
         window.cancelAddPatient = function() { hideModal('addPatientModal'); }
-
         window.showEditPatientModal = function(index) {
             const patient = filteredPatients[index];
             activePatientIndex = index;
@@ -1454,7 +1673,6 @@
             document.getElementById('editNotes').value = patient.notes || '';
             showModal('editPatientModal');
         }
-
         window.saveEditedPatient = async function() {
             showLoading();
             const revisitDaysValue = document.getElementById('editRevisitDays').value;
@@ -1475,6 +1693,7 @@
             }
             try {
                 await updatePatient(activePatientDocId, updatedPatient);
+                syncWithGoogleSheet('update', { ...updatedPatient, id: activePatientDocId });
                 hideModal('editPatientModal');
                 window.showMessage("Đã lưu thay đổi thành công!");
             } catch (e) {
@@ -1482,119 +1701,24 @@
                 window.showMessage("Đã xảy ra lỗi khi lưu. Vui lòng thử lại.");
             } finally { hideLoading(); }
         }
-
         window.cancelEditPatient = function() { hideModal('editPatientModal'); }
-
         window.confirmDeletePatient = function(index) {
             activePatientDocId = filteredPatients[index].id;
             document.getElementById('deleteMessage').textContent = `Bạn có chắc chắn muốn xóa bệnh nhân "${filteredPatients[index].name}" khỏi danh sách không? Thao tác này không thể hoàn tác.`;
             showModal('deleteConfirmModal');
         }
-
         window.deletePatient = async function() {
             showLoading();
             try {
                 const patientDocRef = getPatientDocRef(currentClinicId, activePatientDocId);
                 await deleteDoc(patientDocRef);
+                syncWithGoogleSheet('delete', { id: activePatientDocId });
                 window.showMessage("Đã xóa bệnh nhân thành công.");
             } catch (e) {
                 console.error("Error deleting document:", e);
                 window.showMessage("Đã xảy ra lỗi khi xóa bệnh nhân. Vui lòng thử lại.");
             } finally { hideLoading(); }
         }
-
-        // --- Utility & Helper Functions ---
-
-        function getFriendlyAuthError(errorCode) {
-            switch (errorCode) {
-                case 'auth/invalid-email':
-                case 'auth/user-not-found':
-                case 'auth/wrong-password':
-                case 'auth/invalid-credential':
-                    return 'Tài khoản hoặc mật khẩu không chính xác.';
-                default:
-                    return 'Đã có lỗi xảy ra. Vui lòng thử lại.';
-            }
-        }
-
-        function showLoading() { loadingOverlay.style.display = 'flex'; }
-        function hideLoading() { loadingOverlay.style.display = 'none'; }
-        window.showModal = function(modalId) { document.getElementById(modalId).style.display = 'flex'; }
-        window.hideModal = function(modalId) { document.getElementById(modalId).style.display = 'none'; }
-        window.showMessage = function(message) {
-            messageText.textContent = message;
-            showModal('messageModal');
-        }
-        window.hideMessage = function() { hideModal('messageModal'); }
-
-        function getTodayLocal() {
-            const now = new Date();
-            now.setHours(0, 0, 0, 0);
-            return now;
-        }
-
-        function parseDate(dateInput) {
-            if (!dateInput) return null;
-            if (typeof dateInput.toDate === 'function') {
-                const d = dateInput.toDate();
-                d.setHours(0,0,0,0);
-                return d;
-            }
-            if (dateInput instanceof Date) { return isNaN(dateInput.getTime()) ? null : dateInput; }
-            if (typeof dateInput === 'string') {
-                let parsableString = dateInput;
-                const localMatch = parsableString.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-                if (localMatch) { parsableString = `${localMatch[3]}/${localMatch[2]}/${localMatch[1]}`; } 
-                else { parsableString = parsableString.replace(/-/g, '/').split('T')[0]; }
-                const date = new Date(parsableString);
-                if (isNaN(date.getTime())) return null;
-                date.setHours(0, 0, 0, 0);
-                return date;
-            }
-            return null;
-        }
-
-        function formatDate(dateInput) {
-            const date = parseDate(dateInput);
-            if (!date) return ''; 
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}/${month}/${year}`;
-        }
-
-        function formatValue(key, value) {
-            if (key.toLowerCase().includes('date')) {
-                return formatDate(value);
-            }
-            return value;
-        }
-        
-        function toYYYYMMDD(dateInput) {
-            const date = parseDate(dateInput);
-            if (!date) return null;
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        function getStatusClass(status) {
-            const classes = { 'Quá hẹn': 'badge-overdue', 'Bỏ điều trị': 'badge-discontinued', 'Hẹn Tái Khám': 'badge-revisit', 'Đã khám': 'badge-examined', 'Chờ khám': 'badge-scheduled', 'Sắp tới hẹn': 'badge-upcoming' };
-            return classes[status] || 'badge-secondary';
-        }
-
-        function updateSortIndicators() {
-            document.querySelectorAll('th .sort-indicator').forEach(span => span.textContent = '');
-            const activeHeader = document.querySelector(`th[data-sort="${currentSortColumn}"] .sort-indicator`);
-            if (activeHeader) activeHeader.textContent = sortDirection === 'asc' ? ' ▲' : ' ▼';
-        }
-
-        window.toggleNotes = function(index) {
-            const notesRow = patientTableBody.children[index * 2 + 1];
-            if (notesRow) notesRow.style.display = notesRow.style.display === 'table-row' ? 'none' : 'table-row';
-        }
-
         function updateFixedScrollbar() {
             const table = document.getElementById('patientTable');
             if (!table) return;
@@ -1614,5 +1738,4 @@
     </script>
 </body>
 </html>
-
 
