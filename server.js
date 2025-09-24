@@ -12,14 +12,14 @@ const app = express();
 app.use(cors());
 
 // --- SỬA LỖI: Tăng giới hạn payload lên 50MB ---
-// Lỗi "Request Entity Too Large" xảy ra khi bạn gửi quá nhiều dữ liệu bệnh nhân
-// cho AI cùng lúc (ví dụ: khi ở màn hình chọn phòng khám).
-// Chúng ta tăng giới hạn này lên để xử lý được lượng dữ liệu lớn.
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Phục vụ các tệp tĩnh từ thư mục 'public'
-app.use(express.static(path.join(__dirname, 'public')));
+// --- SỬA LỖI: Phục vụ các tệp tĩnh từ thư mục gốc ---
+// Lỗi "ENOENT: no such file or directory" xảy ra vì Render không tìm thấy
+// thư mục 'public'. Chúng ta sẽ đơn giản hóa cấu trúc, yêu cầu tệp index.html
+// nằm cùng cấp với server.js, và loại bỏ sự cần thiết của thư mục 'public'.
+app.use(express.static(__dirname));
 
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -112,9 +112,9 @@ app.post('/api/assistant', async (req, res) => {
     }
 });
 
-// Route mặc định để phục vụ index.html
+// --- SỬA LỖI: Route mặc định để phục vụ index.html từ thư mục gốc ---
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Khởi động máy chủ
